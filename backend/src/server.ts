@@ -10,11 +10,8 @@ const app = createApp({ prisma, corsOrigins })
 
 const server = app.listen(port, () => {
   console.log(`API listening on http://localhost:${port}`)
-  if (process.env.ALLOW_HEADER_IDENTITY === 'true') {
-    console.warn(
-      'WARNING: ALLOW_HEADER_IDENTITY is enabled. x-student-id is trusted ' +
-        'without verification. Development only — never enable in production.',
-    )
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Session cookies are not Secure outside production.')
   }
 })
 

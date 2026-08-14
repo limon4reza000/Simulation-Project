@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import LessonRenderer from './components/LessonRenderer'
 import { useLessonSource } from './lib/useLessonSource'
-import { postActivity, submitQuiz } from './lib/api'
+import { postActivity, submitQuiz, fetchMe, logout, type CurrentUser } from './lib/api'
+import SignIn from './components/auth/SignIn'
 import { gradeLocally } from './data/chapter01Quiz'
 import { registeredTypes } from './registry/componentRegistry'
 import type { ActivityEvent, Language, LessonSpec } from './registry/types'
@@ -23,6 +24,25 @@ export default function App() {
   const [lesson, setLesson] = useState<LessonSpec | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activity, setActivity] = useState<ActivityEvent[]>([])
+  const [user, setUser] = useState<CurrentUser | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  // Resolve the session once on load. The cookie is httpOnly, so the only way
+  // to know whether we are signed in is to ask the server.
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchMe(controller.signal)
+      .then((me) => setUser(me))
+      .catch(() => setUser(null))
+      .finally(() => setAuthChecked(true))
+    return () => controller.abort()
+  }, [])
+
+  const onSignOut = useCallback(async () => {
+    await logout().catch(() => {})
+    setUser(null)
+    setActivity([])
+  }, [])
 
   // Pick an initial lesson once the catalog resolves.
   useEffect(() => {
@@ -55,7 +75,7 @@ export default function App() {
       setActivity((current) => [event, ...current].slice(0, 8))
 
       // Only report upstream when there is a real simulation behind it.
-      if (source !== 'api' || !event.simulationId) return
+      if (source !== 'api' || !event.simulationId || !user) return
       postActivity(event.simulationId, {
         activityType: event.activityType,
         lessonId: lessonId ?? undefined,
@@ -65,7 +85,7 @@ export default function App() {
         // Losing an analytics event must never interrupt a lesson.
       })
     },
-    [source, lessonId],
+    [source, lessonId, user],
   )
 
   const onQuizSubmit = useCallback(
@@ -116,13 +136,23 @@ export default function App() {
                   : 'fixture data'}
           </p>
         </div>
-        <button
-          type="button"
-          className="app__lang"
-          onClick={() => setLanguage((l) => (l === 'BN' ? 'EN' : 'BN'))}
-        >
-          {language === 'BN' ? 'English' : 'বাংলা'}
-        </button>
+        <div className="app__actions">
+          {user && (
+            <>
+              <span className="app__user">{user.name}</span>
+              <button type="button" className="app__lang" onClick={onSignOut}>
+                {language === 'BN' ? 'সাইন আউট' : 'Sign out'}
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            className="app__lang"
+            onClick={() => setLanguage((l) => (l === 'BN' ? 'EN' : 'BN'))}
+          >
+            {language === 'BN' ? 'English' : 'বাংলা'}
+          </button>
+        </div>
       </header>
 
       <nav className="app__nav">
@@ -139,6 +169,9 @@ export default function App() {
       </nav>
 
       <main className="app__main">
+        {source === 'api' && authChecked && !user && (
+          <SignIn language={language} onSignedIn={setUser} />
+        )}
         {error && <p className="app__error">{error}</p>}
         {lesson ? (
           <LessonRenderer

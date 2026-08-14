@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from 'supertest'
 import type { PrismaClient } from '@prisma/client'
 import { createApp } from '../app'
+import { createHash } from 'node:crypto'
 
 /**
  * Quiz endpoints, exercised against an injected stub.
@@ -43,8 +44,53 @@ const quiz = {
   questions: [question(1, ['ka']), question(2, ['ga'])],
 }
 
+/**
+ * Session stub.
+ *
+ * Identity now comes from a session cookie resolved server-side, so tests
+ * provide the session row the middleware will find rather than asserting a
+ * header the server once trusted.
+ */
+const sha = (t: string) => createHash('sha256').update(t).digest('hex')
+
+function sessionFor(userId: number) {
+  return {
+    id: userId,
+    userId,
+    expiresAt: new Date(Date.now() + 3_600_000),
+    lastSeenAt: new Date(),
+    user: {
+      status: 'ACTIVE',
+      name: 'Test Student',
+      preferredLanguage: 'BN',
+      role: { code: 'STUDENT' },
+      student: { userId },
+    },
+  }
+}
+
+const TOKENS: Record<string, number> = {
+  [sha('tok-42')]: 42,
+  [sha('tok-99')]: 99,
+  [sha('tok-999')]: 999,
+}
+
+function sessionStub() {
+  return {
+    findUnique: vi.fn(({ where }: { where: { tokenHash: string } }) =>
+      Promise.resolve(
+        TOKENS[where.tokenHash] ? sessionFor(TOKENS[where.tokenHash]) : null,
+      ),
+    ),
+    delete: vi.fn().mockResolvedValue({}),
+    update: vi.fn().mockResolvedValue({}),
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+  }
+}
+
 function createStub() {
   return {
+    session: sessionStub(),
     quiz: {
       findFirst: vi.fn().mockResolvedValue(quiz),
     },
@@ -68,8 +114,7 @@ function createStub() {
 }
 
 let stub: ReturnType<typeof createStub>
-const app = () =>
-  createApp({ prisma: stub as unknown as PrismaClient, allowHeaderIdentity: true })
+const app = () => createApp({ prisma: stub as unknown as PrismaClient })
 
 beforeEach(() => {
   stub = createStub()
@@ -133,7 +178,7 @@ describe('POST /api/quizzes/:id/attempts', () => {
   it('starts an attempt for an identified student', async () => {
     const res = await request(app())
       .post('/api/quizzes/3/attempts')
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
     expect(res.status).toBe(201)
     expect(res.body.data.id).toBe(77)
   })
@@ -147,7 +192,7 @@ describe('POST /api/quizzes/:id/attempts', () => {
     stub.quizAttempt.count.mockResolvedValue(2) // limit is 2
     const res = await request(app())
       .post('/api/quizzes/3/attempts')
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
     expect(res.status).toBe(409)
     expect(res.body.error.code).toBe('ATTEMPT_LIMIT_REACHED')
     expect(stub.quizAttempt.create).not.toHaveBeenCalled()
@@ -160,7 +205,7 @@ describe('POST /api/attempts/:id/submit', () => {
   it('grades a fully correct submission', async () => {
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({ responses: { '1': 'ka', '2': 'ga' } })
 
     expect(res.status).toBe(200)
@@ -174,7 +219,7 @@ describe('POST /api/attempts/:id/submit', () => {
   it('grades a partially correct submission', async () => {
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({ responses: { '1': 'ka', '2': 'kha' } })
     expect(res.body.data.score).toBe(1)
     expect(res.body.data.results.map((r: { correct: boolean }) => r.correct)).toEqual(
@@ -185,7 +230,7 @@ describe('POST /api/attempts/:id/submit', () => {
   it('reveals the key and explanation only after submitting', async () => {
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({ responses: { '1': 'ka', '2': 'ga' } })
     expect(res.body.data.results[0].correctKeys).toEqual(['ka'])
     expect(res.body.data.results[0].explanation).toContain('প্ল্যাঙ্ক')
@@ -194,7 +239,7 @@ describe('POST /api/attempts/:id/submit', () => {
   it('persists per-question answers, not just a total', async () => {
     await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({ responses: { '1': 'ka', '2': 'kha' } })
     expect(stub.quizAttemptAnswer.createMany).toHaveBeenCalledOnce()
     const rows = stub.quizAttemptAnswer.createMany.mock.calls[0][0].data
@@ -207,7 +252,7 @@ describe('POST /api/attempts/:id/submit', () => {
     // Attempt 77 belongs to student 42.
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '99')
+      .set('Cookie', ['ilsp_session=tok-99'])
       .send({ responses: { '1': 'ka' } })
     expect(res.status).toBe(403)
     expect(stub.$transaction).not.toHaveBeenCalled()
@@ -222,7 +267,7 @@ describe('POST /api/attempts/:id/submit', () => {
     })
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({ responses: { '1': 'ka' } })
     expect(res.status).toBe(409)
     expect(res.body.error.code).toBe('ALREADY_SUBMITTED')
@@ -231,7 +276,7 @@ describe('POST /api/attempts/:id/submit', () => {
   it('rejects a malformed body', async () => {
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({ responses: 'not an object' })
     expect(res.status).toBe(400)
   })

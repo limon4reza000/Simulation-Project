@@ -36,6 +36,9 @@ export class ApiError extends Error {
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     signal,
+    // The session cookie is httpOnly and cross-origin in development, so every
+    // request must opt in to sending it.
+    credentials: 'include',
     headers: { Accept: 'application/json' },
   })
 
@@ -102,13 +105,7 @@ export function fetchLesson(
   )
 }
 
-/**
- * Reports a simulation interaction.
- *
- * `x-student-id` is the server's development identity shim and is only honoured
- * when the API runs with ALLOW_HEADER_IDENTITY=true. It disappears when session
- * auth lands — do not build anything on top of it.
- */
+/** Reports a simulation interaction. Identity comes from the session cookie. */
 export async function postActivity(
   simulationId: number,
   payload: {
@@ -118,21 +115,36 @@ export async function postActivity(
     metadata?: Record<string, string | number | boolean>
   },
 ): Promise<void> {
-  const studentId = import.meta.env.VITE_STUDENT_ID
-  const response = await fetch(
-    `${BASE_URL}/api/simulations/${simulationId}/activity`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(studentId ? { 'x-student-id': String(studentId) } : {}),
-      },
-      body: JSON.stringify(payload),
-    },
-  )
+  await post<{ id: number }>(`/api/simulations/${simulationId}/activity`, payload)
+}
 
-  if (!response.ok) {
-    throw new ApiError(response.status, 'ACTIVITY_FAILED', 'Could not record activity')
+export interface CurrentUser {
+  userId: number
+  name: string
+  roleCode: string
+  preferredLanguage: string
+  isStudent: boolean
+}
+
+export function login(email: string, password: string) {
+  return post<CurrentUser>('/api/auth/login', { email, password })
+}
+
+export function logout() {
+  return post<{ ok: boolean }>('/api/auth/logout')
+}
+
+export function logoutEverywhere() {
+  return post<{ revoked: number }>('/api/auth/logout-all')
+}
+
+/** Resolves the current session, or null when not signed in. */
+export async function fetchMe(signal?: AbortSignal): Promise<CurrentUser | null> {
+  try {
+    return await get<CurrentUser>('/api/auth/me', signal)
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) return null
+    throw error
   }
 }
 
@@ -151,18 +163,11 @@ export interface QuizResult {
   results: QuizResultRow[]
 }
 
-function studentHeaders(): Record<string, string> {
-  const studentId = import.meta.env.VITE_STUDENT_ID
-  return {
-    'Content-Type': 'application/json',
-    ...(studentId ? { 'x-student-id': String(studentId) } : {}),
-  }
-}
-
 async function post<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
-    headers: studentHeaders(),
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   })
   if (!response.ok) {

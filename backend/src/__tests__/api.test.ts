@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from 'supertest'
 import type { PrismaClient } from '@prisma/client'
 import { createApp } from '../app'
+import { createHash } from 'node:crypto'
 
 /**
  * The API is exercised end to end against an injected stub rather than a live
@@ -101,8 +102,53 @@ const caliperLesson = {
   ],
 }
 
+/**
+ * Session stub.
+ *
+ * Identity now comes from a session cookie resolved server-side, so tests
+ * provide the session row the middleware will find rather than asserting a
+ * header the server once trusted.
+ */
+const sha = (t: string) => createHash('sha256').update(t).digest('hex')
+
+function sessionFor(userId: number) {
+  return {
+    id: userId,
+    userId,
+    expiresAt: new Date(Date.now() + 3_600_000),
+    lastSeenAt: new Date(),
+    user: {
+      status: 'ACTIVE',
+      name: 'Test Student',
+      preferredLanguage: 'BN',
+      role: { code: 'STUDENT' },
+      student: { userId },
+    },
+  }
+}
+
+const TOKENS: Record<string, number> = {
+  [sha('tok-42')]: 42,
+  [sha('tok-99')]: 99,
+  [sha('tok-999')]: 999,
+}
+
+function sessionStub() {
+  return {
+    findUnique: vi.fn(({ where }: { where: { tokenHash: string } }) =>
+      Promise.resolve(
+        TOKENS[where.tokenHash] ? sessionFor(TOKENS[where.tokenHash]) : null,
+      ),
+    ),
+    delete: vi.fn().mockResolvedValue({}),
+    update: vi.fn().mockResolvedValue({}),
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+  }
+}
+
 function createStub() {
   return {
+    session: sessionStub(),
     class: {
       findMany: vi.fn().mockResolvedValue([
         {
@@ -152,11 +198,8 @@ function createStub() {
 
 let stub: ReturnType<typeof createStub>
 
-function app(allowHeaderIdentity = true) {
-  return createApp({
-    prisma: stub as unknown as PrismaClient,
-    allowHeaderIdentity,
-  })
+function app() {
+  return createApp({ prisma: stub as unknown as PrismaClient })
 }
 
 beforeEach(() => {
@@ -289,7 +332,7 @@ describe('POST /api/simulations/:id/activity', () => {
   it('records an activity for an identified student', async () => {
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({ activityType: 'VERNIER_ANSWER_SUBMITTED', metadata: { correct: true } })
 
     expect(res.status).toBe(201)
@@ -306,19 +349,21 @@ describe('POST /api/simulations/:id/activity', () => {
     expect(stub.learningActivity.create).not.toHaveBeenCalled()
   })
 
-  it('ignores x-student-id when the dev shim is disabled', async () => {
-    // Secure by default: the header is only trusted when explicitly enabled.
-    const res = await request(app(false))
+  it('never trusts an x-student-id header — the shim is gone', async () => {
+    // Regression guard. Identity used to come from this header, which any
+    // caller could set to any student's id. Nothing may resurrect that path.
+    const res = await request(app())
       .post(url)
       .set('x-student-id', '42')
       .send({ activityType: 'VERNIER_ANSWER_SUBMITTED' })
     expect(res.status).toBe(401)
+    expect(stub.learningActivity.create).not.toHaveBeenCalled()
   })
 
   it('rejects a free-text activityType', async () => {
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({ activityType: 'some arbitrary note about the child' })
     expect(res.status).toBe(400)
   })
@@ -329,7 +374,7 @@ describe('POST /api/simulations/:id/activity', () => {
     )
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({ activityType: 'VERNIER_ANSWER_SUBMITTED', metadata })
     expect(res.status).toBe(400)
     expect(stub.learningActivity.create).not.toHaveBeenCalled()
@@ -338,7 +383,7 @@ describe('POST /api/simulations/:id/activity', () => {
   it('rejects nested metadata objects', async () => {
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({
         activityType: 'VERNIER_ANSWER_SUBMITTED',
         metadata: { nested: { name: 'a child', school: 'somewhere' } },
@@ -350,7 +395,7 @@ describe('POST /api/simulations/:id/activity', () => {
     stub.simulation.findFirst.mockResolvedValue(null)
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '42')
+      .set('Cookie', ['ilsp_session=tok-42'])
       .send({ activityType: 'VERNIER_ANSWER_SUBMITTED' })
     expect(res.status).toBe(404)
   })
@@ -359,7 +404,7 @@ describe('POST /api/simulations/:id/activity', () => {
     stub.student.findUnique.mockResolvedValue(null)
     const res = await request(app())
       .post(url)
-      .set('x-student-id', '999')
+      .set('Cookie', ['ilsp_session=tok-999'])
       .send({ activityType: 'VERNIER_ANSWER_SUBMITTED' })
     expect(res.status).toBe(404)
   })

@@ -9,6 +9,7 @@
  * Idempotent — safe to re-run. `npx prisma db seed`.
  */
 
+import { hashPassword } from '../src/lib/password'
 import {
   PrismaClient,
   ContentStatus,
@@ -52,16 +53,23 @@ async function main() {
   }
   const adminRole = await prisma.role.findUniqueOrThrow({ where: { code: 'ADMIN' } })
 
-  // Placeholder credential. Replace before any deployment — this hash is for
-  // local development only and must never reach a real environment.
+  // Development credentials. These are real scrypt hashes, not placeholders,
+  // so the login route can be exercised — but they are well-known passwords and
+  // must never exist in a deployed environment. Override with SEED_PASSWORD.
+  const devPassword = process.env.SEED_PASSWORD ?? 'ChangeMe!123'
+  // Hashed per user rather than once and reused: identical hashes would reveal
+  // that two accounts share a password, which is exactly what a salt prevents.
+
   const author = await prisma.user.upsert({
     where: { email: 'author@example.local' },
-    update: {},
+    // Refresh the hash on re-seed; an empty update would leave an older
+    // placeholder in place and login would fail for no visible reason.
+    update: { passwordHash: await hashPassword(devPassword) },
     create: {
       roleId: adminRole.id,
       name: 'Content Author',
       email: 'author@example.local',
-      passwordHash: 'CHANGE_ME_dev_only',
+      passwordHash: await hashPassword(devPassword),
       preferredLanguage: Language.BN,
     },
   })
@@ -92,12 +100,12 @@ async function main() {
   })
   const studentUser = await prisma.user.upsert({
     where: { email: 'student@example.local' },
-    update: {},
+    update: { passwordHash: await hashPassword(devPassword) },
     create: {
       roleId: studentRole.id,
       name: 'ডেমো শিক্ষার্থী',
       email: 'student@example.local',
-      passwordHash: 'CHANGE_ME_dev_only',
+      passwordHash: await hashPassword(devPassword),
       preferredLanguage: Language.BN,
     },
   })
@@ -110,7 +118,9 @@ async function main() {
       studentCode: 'DEMO-0001',
     },
   })
-  console.log(`Demo student user id = ${studentUser.id} (use as x-student-id)`)
+  console.log(
+    `Demo login: student@example.local / ${devPassword} (user id ${studentUser.id})`,
+  )
 
   const physics = await prisma.subject.upsert({
     where: { code: 'PHY' },

@@ -14,8 +14,9 @@ NCTB curriculum content. First vertical slice: **Physics, Class 9–10, Chapter 
 | Renderers | 4 built: vernier caliper, screw gauge, error propagation, log-scale explorer |
 | Component registry | Complete, 11 tests |
 | API layer | Catalog, lesson, activity and quiz endpoints; 58 tests plus a 31-check live-database flow |
-| Auth | **Not started** — a clearly-marked dev header shim stands in |
-| Progress, quizzes | **Not started** |
+| Auth | Session cookies with scrypt passwords; the header shim is gone |
+| Quizzes | Server-graded, verified live; 5 of the 6 printed MCQs seeded |
+| Progress aggregation | **Not started** |
 
 The quiz flow has been exercised end to end against a real MySQL 8.4 server:
 scoring, per-question persistence, attempt ownership (403), duplicate submission
@@ -52,7 +53,7 @@ docs/
 cd frontend
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 43 tests
+npm test         # 52 tests
 npm run build
 ```
 
@@ -70,7 +71,7 @@ npx prisma migrate deploy          # creates the 35 tables
 mysql -u USER -p ilsp_dev < prisma/sql/01_check_constraints.sql
 npm run db:seed
 npm run dev                        # API on http://localhost:4000
-npm test                           # 58 tests, no database required
+npm test                           # 82 tests, no database required
 ```
 
 The constraints are applied as a **separate step**, not pasted into the
@@ -104,6 +105,10 @@ message } }` on failure.
 | GET | `/api/quizzes/:id?lang=bn\|en` | Questions and options — **never the answer key** |
 | POST | `/api/quizzes/:id/attempts` | Starts an attempt; enforces the attempt limit |
 | POST | `/api/attempts/:id/submit` | Grades server-side; reveals keys and explanations |
+| POST | `/api/auth/login` | Sets the session cookie |
+| POST | `/api/auth/logout` | Revokes this session |
+| POST | `/api/auth/logout-all` | Revokes every session for the user |
+| GET | `/api/auth/me` | Current user, or 401 |
 
 `GET /api/lessons/:id` is a drop-in replacement for
 `frontend/src/data/chapter01.ts` — same shape, so the renderers are unchanged.
@@ -111,16 +116,34 @@ Every catalog query filters on published-and-not-deleted; there is deliberately
 no `?includeDrafts` flag, because that would be one forgotten guard away from
 showing unreviewed content to a child.
 
-### The auth shim — read this before deploying anything
+### Authentication
 
-There is no real authentication yet. `POST /api/simulations/:id/activity`
-identifies the caller from an `x-student-id` header, which is **trivially
-spoofable** — any caller could write activity rows for any student.
+Session cookies, not tokens in localStorage.
 
-It is therefore **off by default** and only honoured when the API runs with
-`ALLOW_HEADER_IDENTITY=true`. With it off, the endpoint returns 401. The server
-logs a warning at startup when it is enabled. Delete `src/lib/auth.ts`'s header
-path the moment session auth lands.
+- Passwords are hashed with **scrypt** from node's standard library — no native
+  module to compile and one less dependency in the supply chain of a platform
+  used by children. Parameters travel inside the hash string, so they can be
+  raised later without invalidating existing passwords.
+- Passwords are Unicode-normalised (NFKC) before hashing, so a Bangla password
+  typed on one keyboard matches the same password typed on another.
+- The session cookie is `httpOnly`, `SameSite=Lax`, and `Secure` outside
+  development. Page scripts cannot read it.
+- The database stores **only a SHA-256 of the session token**. A dump of the
+  session table does not let anyone impersonate a user. (SHA-256 rather than
+  scrypt is deliberate: the token is 256 bits of randomness, so there is no
+  dictionary to slow down. Passwords need a slow KDF because humans choose
+  them; tokens do not.)
+- Sessions are rows, not self-contained tokens, so logout, "sign out
+  everywhere" and suspending an account take effect immediately.
+- A wrong password and an unknown email return the same status, code and
+  message, and unknown emails still burn comparable CPU — otherwise response
+  latency alone reveals which addresses are registered.
+- Login failures are rate limited per IP + email. The limiter is in-process, so
+  a multi-instance deployment must move it to Redis or the database.
+
+Because the cookie is cross-origin in development, CORS runs with
+`credentials: true` and an explicit origin allowlist — a wildcard origin cannot
+be combined with credentials, and should not be.
 
 Data minimisation is enforced server-side, not left to callers: `activityType`
 must be `UPPER_SNAKE_CASE` (so free text cannot be smuggled into what is
@@ -180,15 +203,17 @@ fixtures when it is not, so the renderers stay workable without MySQL. **The
 active source is shown in the header.** A silent fallback would be worse than no
 fallback, because fixture data would be mistaken for live data.
 
-Set `VITE_API_URL` to point elsewhere, and `VITE_STUDENT_ID` to exercise the
-activity endpoint while the dev shim is enabled.
+Set `VITE_API_URL` to point the client at a different API host.
+
+Seeded development login: `student@example.local` / `ChangeMe!123` (override
+with `SEED_PASSWORD`). These are well-known credentials and must never exist in
+a deployed environment.
 
 ## Next
 
-1. Run the migration and seed against a real MySQL instance — nothing in
-   `backend/prisma` has ever touched a live database
-2. Session auth + roles, then `TeacherAssignment`-scoped teacher views;
-   delete the `x-student-id` shim
+1. Move the login rate limiter out of process memory before running more than
+   one API instance
+2. `TeacherAssignment`-scoped teacher views and role-gated authoring routes
 3. Quiz engine, seeded from the নমুনা প্রশ্ন MCQs on book pp. 29–31
 4. Progress aggregation from `LessonProgress` / `TopicProgress`
 5. Time how long instrument #3 takes and record it — that number is the

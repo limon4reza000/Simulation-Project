@@ -597,3 +597,78 @@ body {
   border-color: var(--border);
   font-weight: 400;
 }
+
+/* ---- sign in ---- */
+
+.app__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.app__user {
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+}
+
+.signin {
+  display: grid;
+  gap: 12px;
+  max-width: 340px;
+  margin: 0 0 28px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.signin__title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.signin__field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.signin__field input {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.signin__field input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.signin__error {
+  margin: 0;
+  color: var(--bad);
+  font-size: 0.88rem;
+}
+
+.signin button {
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.signin button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
