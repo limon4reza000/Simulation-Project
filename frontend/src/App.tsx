@@ -1,7 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import LessonRenderer from './components/LessonRenderer'
 import { useLessonSource } from './lib/useLessonSource'
-import { postActivity, submitQuiz, fetchMe, logout, type CurrentUser } from './lib/api'
+import {
+  postActivity,
+  submitQuiz,
+  fetchMe,
+  logout,
+  fetchChapterProgress,
+  recordLessonProgress,
+  type CurrentUser,
+  type ChapterProgress,
+} from './lib/api'
+import ProgressPanel from './components/progress/ProgressPanel'
 import SignIn from './components/auth/SignIn'
 import { gradeLocally } from './data/chapter01Quiz'
 import { registeredTypes } from './registry/componentRegistry'
@@ -17,7 +27,7 @@ import './styles.css'
  * fallback, because fixture data would be mistaken for live data.
  */
 export default function App() {
-  const { source, index, loadLesson } = useLessonSource()
+  const { source, index, chapterId, loadLesson } = useLessonSource()
 
   const [language, setLanguage] = useState<Language>('BN')
   const [lessonId, setLessonId] = useState<number | null>(null)
@@ -26,6 +36,25 @@ export default function App() {
   const [activity, setActivity] = useState<ActivityEvent[]>([])
   const [user, setUser] = useState<CurrentUser | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
+  const [progress, setProgress] = useState<ChapterProgress | null>(null)
+
+  const refreshProgress = useCallback(async () => {
+    if (source !== 'api' || !user?.isStudent || chapterId == null) {
+      setProgress(null)
+      return
+    }
+    try {
+      setProgress(await fetchChapterProgress(chapterId))
+    } catch {
+      // Progress is a supporting panel; failing to load it must not take the
+      // lesson down with it.
+      setProgress(null)
+    }
+  }, [source, user, chapterId])
+
+  useEffect(() => {
+    void refreshProgress()
+  }, [refreshProgress])
 
   // Resolve the session once on load. The cookie is httpOnly, so the only way
   // to know whether we are signed in is to ask the server.
@@ -88,10 +117,23 @@ export default function App() {
     [source, lessonId, user],
   )
 
+  const onMarkComplete = useCallback(async () => {
+    if (lessonId == null || source !== 'api' || !user?.isStudent) return
+    try {
+      await recordLessonProgress(lessonId, 'COMPLETED')
+      await refreshProgress()
+    } catch {
+      // Ignore: the student can retry, and progress is derived so nothing is lost.
+    }
+  }, [lessonId, source, user, refreshProgress])
+
   const onQuizSubmit = useCallback(
     async (quizId: number, responses: Record<string, string>) => {
       if (source === 'api') {
-        return submitQuiz(quizId, responses, language)
+        const outcome = await submitQuiz(quizId, responses, language)
+        // A score changes topic progress, so pull the panel back in step.
+        void refreshProgress()
+        return outcome
       }
       // Offline harness only. The real key never reaches the browser.
       const local = gradeLocally(responses)
@@ -104,7 +146,7 @@ export default function App() {
         })),
       }
     },
-    [source, language],
+    [source, language, refreshProgress],
   )
 
   return (
@@ -173,6 +215,15 @@ export default function App() {
           <SignIn language={language} onSignedIn={setUser} />
         )}
         {error && <p className="app__error">{error}</p>}
+        {progress && (
+          <ProgressPanel
+            progress={progress}
+            language={language}
+            currentLessonId={lessonId}
+            currentLessonCompleted={false}
+            onMarkComplete={onMarkComplete}
+          />
+        )}
         {lesson ? (
           <LessonRenderer
             lesson={lesson}

@@ -16,7 +16,7 @@ NCTB curriculum content. First vertical slice: **Physics, Class 9–10, Chapter 
 | API layer | Catalog, lesson, activity and quiz endpoints; 58 tests plus a 31-check live-database flow |
 | Auth | Session cookies with scrypt passwords; the header shim is gone |
 | Quizzes | Server-graded, verified live; 5 of the 6 printed MCQs seeded |
-| Progress aggregation | **Not started** |
+| Progress aggregation | Derived from lessons and quiz scores; 18 unit + 25 live-database checks |
 
 The quiz flow has been exercised end to end against a real MySQL 8.4 server:
 scoring, per-question persistence, attempt ownership (403), duplicate submission
@@ -109,6 +109,8 @@ message } }` on failure.
 | POST | `/api/auth/logout` | Revokes this session |
 | POST | `/api/auth/logout-all` | Revokes every session for the user |
 | GET | `/api/auth/me` | Current user, or 401 |
+| POST | `/api/lessons/:id/progress` | Records the caller's own lesson progress |
+| GET | `/api/chapters/:id/progress` | The caller's own progress, with weak topics |
 
 `GET /api/lessons/:id` is a drop-in replacement for
 `frontend/src/data/chapter01.ts` — same shape, so the renderers are unchanged.
@@ -179,6 +181,39 @@ reading. Deliberate, not stale.
 devices (Nirmala UI, Noto Sans Bengali). Bangla webfonts are large and the
 target user is on a metered connection.
 
+## Progress
+
+Progress is **derived, never authored**: `TopicProgress` and `SubjectProgress`
+are recomputed from lesson completion and submitted quiz attempts every time
+either changes. Counters that are incremented in place drift the moment
+anything is retried, republished or deleted; recomputing costs a little more per
+write and is always correct.
+
+Two deliberate distinctions the tests pin down:
+
+- `scoreAvg` is **null when nothing has been attempted**, not 0. "Took no quiz"
+  and "took a quiz and scored zero" are different facts, and showing the second
+  when the first is true discourages a student who has done nothing wrong.
+- A topic is **weak only if attempted and scored below the threshold**. Topics
+  never started are not weak — they are unvisited. Conflating the two fills a
+  beginner's dashboard with red on day one.
+
+Overall completion is weighted by lesson count, not topic count, so one finished
+one-lesson topic beside an untouched nine-lesson topic reads as 10%, not 50%.
+
+### Seeding caveat
+
+`prisma/seed.ts` upserts users, classes, subjects, chapters, topics and lessons
+on natural keys, but the content below them (textbook, references, learning
+content, simulations, quizzes, questions) has no natural unique key. Those are
+created once and **skipped** on later runs.
+
+This was found the hard way: before the guard existed, three seed runs during
+development left 15 questions where there should be 5, three quizzes, and nine
+simulations. The header claimed idempotency the script did not have. To rebuild
+content cleanly, recreate the database and migrate again rather than re-seeding
+over the top.
+
 ## Content provenance
 
 Content traces to `Secondary (BV)-2026_Class 9-10_Physics_compressed.pdf`
@@ -213,6 +248,8 @@ a deployed environment.
 
 1. Move the login rate limiter out of process memory before running more than
    one API instance
+2. Give the seed natural unique keys so content can be upserted rather than
+   skipped — see the note below
 2. `TeacherAssignment`-scoped teacher views and role-gated authoring routes
 3. Quiz engine, seeded from the নমুনা প্রশ্ন MCQs on book pp. 29–31
 4. Progress aggregation from `LessonProgress` / `TopicProgress`

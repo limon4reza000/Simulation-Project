@@ -6,6 +6,7 @@ import { parseId, parseLanguage } from '../lib/http'
 import { requireStudent } from '../lib/auth'
 import { gradeAttempt, type AnswerConfig, type Response } from '../lib/grading'
 import { mapQuizForStudent, quizInclude } from '../mappers/quiz'
+import { recomputeAfterQuiz } from '../services/progress'
 
 /**
  * Quiz delivery and grading.
@@ -161,6 +162,15 @@ export function createQuizRouter(prisma: PrismaClient): Router {
           },
         }),
       ])
+
+      // Roll the score into topic and subject progress. Failing to aggregate
+      // must not fail the submission — the attempt is already durably stored,
+      // and progress is derived, so it can be recomputed later.
+      await recomputeAfterQuiz(prisma, studentUserId, attempt.quizId).catch(
+        (error: unknown) => {
+          console.error('progress recompute failed after quiz submit:', error)
+        },
+      )
 
       // Now that the attempt is closed, revealing the key is safe and is what
       // makes the result screen a teaching moment rather than just a number.

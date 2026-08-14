@@ -6,7 +6,16 @@
  * first. Every content version seeded here carries a TextbookReference and an
  * APPROVED ContentValidation, because §14.4 forbids publishing without one.
  *
- * Idempotent — safe to re-run. `npx prisma db seed`.
+ * Re-runnable. Users, classes, subjects, chapters, topics and lessons are
+ * upserted on natural keys. The content objects below them (textbook,
+ * references, learning content, simulations, quizzes, questions) have no
+ * natural unique key, so they are created once and then SKIPPED on later runs:
+ * without that guard every re-run silently duplicated them, which is exactly
+ * what happened during development before this was noticed.
+ *
+ * To rebuild content from scratch, recreate the database and migrate again.
+ *
+ * `npx prisma db seed`
  */
 
 import { hashPassword } from '../src/lib/password'
@@ -141,7 +150,21 @@ async function main() {
     })
   }
 
-  // ---- textbook and the references content is validated against --------
+  // ---- content objects -------------------------------------------------
+  // These have no natural unique key to upsert on, so they are created exactly
+  // once. Re-running the seed must not fabricate a second copy of the textbook,
+  // the quiz, or every question.
+  const existingTextbooks = await prisma.textbook.count()
+  if (existingTextbooks > 0) {
+    console.log(
+      `Content already present (${existingTextbooks} textbook row(s)). ` +
+        'Skipping content creation to avoid duplicating it.',
+    )
+    const counts = await summarise()
+    console.log('Seed complete:', counts)
+    return
+  }
+
   const textbook = await prisma.textbook.create({
     data: {
       classId: classes[0].id,
@@ -632,7 +655,12 @@ async function main() {
       'options (ka) and (ga) are both "4.07 cm" in the printed book.',
   )
 
-  const counts = {
+  const counts = await summarise()
+  console.log('Seed complete:', counts)
+}
+
+async function summarise() {
+  return {
     classes: await prisma.class.count(),
     topics: await prisma.topic.count(),
     lessons: await prisma.lesson.count(),
@@ -641,7 +669,6 @@ async function main() {
     simulations: await prisma.simulation.count(),
     validations: await prisma.contentValidation.count(),
   }
-  console.log('Seed complete:', counts)
 }
 
 main()

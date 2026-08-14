@@ -206,6 +206,40 @@ export async function submitQuiz(
   )
 }
 
+export interface TopicProgress {
+  topicId: number
+  titleBn: string
+  titleEn: string
+  displayOrder: number
+  lessonCount: number
+  completedLessons: number
+  completionPercent: number
+  scoreAvg: number | null
+  attempts: number
+}
+
+export interface ChapterProgress {
+  chapterId: number
+  overallPercent: number
+  topics: TopicProgress[]
+  weakTopicIds: number[]
+}
+
+export function fetchChapterProgress(chapterId: number, signal?: AbortSignal) {
+  return get<ChapterProgress>(`/api/chapters/${chapterId}/progress`, signal)
+}
+
+export function recordLessonProgress(
+  lessonId: number,
+  status: 'IN_PROGRESS' | 'COMPLETED',
+  timeSpentSeconds?: number,
+) {
+  return post<{ status: string; completedAt: string | null }>(
+    `/api/lessons/${lessonId}/progress`,
+    { status, timeSpentSeconds },
+  )
+}
+
 export async function checkHealth(signal?: AbortSignal): Promise<boolean> {
   try {
     await get<{ status: string }>('/api/health', signal)
