@@ -355,6 +355,14 @@ model LessonComponent {
   exerciseId      Int? @map("exercise_id")
   quizId          Int? @map("quiz_id")
 
+  /// Per-placement overrides of the simulation's SimulationParameter defaults.
+  ///
+  /// Without this, two lessons using the same instrument at different settings
+  /// (an explore caliper and a practice caliper) would need duplicate
+  /// Simulation rows, which splits their configuration and version history for
+  /// no reason. The API merges: parameter defaults first, these on top.
+  parameterOverrides Json? @map("parameter_overrides")
+
   lesson        Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   content       LearningContent? @relation(fields: [contentId], references: [id], onDelete: Restrict)
   visualization Visualization?   @relation(fields: [visualizationId], references: [id], onDelete: Restrict)

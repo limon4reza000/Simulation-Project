@@ -70,8 +70,12 @@ export const chapter01Lessons: LessonSpec[] = [
         },
       },
       {
+        // Practice mode is the same SIMULATION with a parameter override, not
+        // an EXERCISE component: the exclusive-arc CHECK constraint requires an
+        // EXERCISE row to point at an Exercise, and duplicating the instrument
+        // as an Exercise would split its configuration for no benefit.
         id: 203,
-        componentType: 'EXERCISE',
+        componentType: 'SIMULATION',
         displayOrder: 3,
         rendererType: 'SIM_VERNIER_CALIPER',
         sourcePage: 25,
@@ -115,7 +119,7 @@ export const chapter01Lessons: LessonSpec[] = [
       },
       {
         id: 303,
-        componentType: 'EXERCISE',
+        componentType: 'SIMULATION',
         displayOrder: 3,
         rendererType: 'SIM_SCREW_GAUGE',
         sourcePage: 22,

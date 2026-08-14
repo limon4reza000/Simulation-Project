@@ -77,6 +77,33 @@ async function main() {
     ),
   )
 
+  // A demo student, so the activity endpoint can be exercised end to end in
+  // development. Remove before any real deployment.
+  const studentRole = await prisma.role.findUniqueOrThrow({
+    where: { code: 'STUDENT' },
+  })
+  const studentUser = await prisma.user.upsert({
+    where: { email: 'student@example.local' },
+    update: {},
+    create: {
+      roleId: studentRole.id,
+      name: 'ডেমো শিক্ষার্থী',
+      email: 'student@example.local',
+      passwordHash: 'CHANGE_ME_dev_only',
+      preferredLanguage: Language.BN,
+    },
+  })
+  await prisma.student.upsert({
+    where: { userId: studentUser.id },
+    update: {},
+    create: {
+      userId: studentUser.id,
+      classId: classes[0].id,
+      studentCode: 'DEMO-0001',
+    },
+  })
+  console.log(`Demo student user id = ${studentUser.id} (use as x-student-id)`)
+
   const physics = await prisma.subject.upsert({
     where: { code: 'PHY' },
     update: {},
@@ -371,6 +398,16 @@ async function main() {
         displayOrder: 2,
         simulationId: caliper.id,
       },
+      {
+        // Same simulation, second placement. Practice mode is a parameter
+        // override rather than a separate Simulation row or an EXERCISE
+        // component — see the note on LessonComponent.parameterOverrides.
+        lessonId: caliperLesson.id,
+        componentType: ComponentType.SIMULATION,
+        displayOrder: 3,
+        simulationId: caliper.id,
+        parameterOverrides: { mode: 'practice' },
+      },
     ],
     skipDuplicates: true,
   })
@@ -394,6 +431,13 @@ async function main() {
         componentType: ComponentType.SIMULATION,
         displayOrder: 2,
         simulationId: screwGauge.id,
+      },
+      {
+        lessonId: gaugeLesson.id,
+        componentType: ComponentType.SIMULATION,
+        displayOrder: 3,
+        simulationId: screwGauge.id,
+        parameterOverrides: { mode: 'practice' },
       },
     ],
     skipDuplicates: true,

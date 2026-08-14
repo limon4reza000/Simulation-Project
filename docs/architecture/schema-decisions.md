@@ -27,6 +27,7 @@ reads as carelessness.
 | 10 | Added CHECK constraints in `prisma/sql/01_check_constraints.sql` | Exclusive arc, percentage bounds, page ordering |
 | 11 | Set `utf8mb4_unicode_ci` on Bangla text columns | Bangla sorting and search were silently broken |
 | 12 | Marked `Notification`, `Achievement`, `StudentAchievement` as Phase 2 | MVP scope reduction |
+| 13 | Added `LessonComponent.parameterOverrides` | One simulation could not be reused at two settings |
 
 ---
 
@@ -144,6 +145,25 @@ appear in Chapter 20 as a deliberate control rather than as an accident of
 collecting whatever was easy.
 
 ---
+
+## 13. `LessonComponent.parameterOverrides`
+
+Surfaced while building the lesson API, not while drawing the ERD.
+
+A lesson wants the same instrument twice: once in explore mode and once in
+practice mode. `SimulationParameter` holds defaults per *Simulation*, not per
+*placement*, so the only ways to express that were to duplicate the whole
+`Simulation` row — splitting its configuration, version and status across two
+records that must then be kept in step — or to invent an `Exercise` row that
+merely points back at the same instrument.
+
+A nullable JSON column on the placement solves it directly. The API merges
+`SimulationParameter` defaults first and these on top, so an override is always
+a narrowing of a declared parameter rather than a new one.
+
+Note what this is *not*: a general-purpose settings bag. Anything that belongs
+to the instrument itself still belongs in `SimulationParameter`, where it is
+typed, bounded and labelled in both languages.
 
 ## Tooling note: Prisma 6, not 7
 
