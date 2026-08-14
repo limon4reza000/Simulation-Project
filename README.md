@@ -8,17 +8,19 @@ NCTB curriculum content. First vertical slice: **Physics, Class 9–10, Chapter 
 
 | Area | State |
 |---|---|
-| Database schema | Written and validated (34 models) — **not yet migrated against a live DB** |
-| Seed script | Written and typechecked — **not yet executed** (needs MySQL) |
+| Database schema | Migrated and verified against MySQL 8.4.9; all CHECK constraints proven to enforce |
+| Seed script | Runs clean: 2 classes, 9 topics, 5 lessons, 5 questions, 11 components |
 | Instrument logic | Complete, 32 unit tests against printed worked examples |
 | Renderers | 4 built: vernier caliper, screw gauge, error propagation, log-scale explorer |
 | Component registry | Complete, 11 tests |
-| API layer | Catalog + lesson + activity endpoints, 25 tests — **never run against a real database** |
+| API layer | Catalog, lesson, activity and quiz endpoints; 58 tests plus a 31-check live-database flow |
 | Auth | **Not started** — a clearly-marked dev header shim stands in |
 | Progress, quizzes | **Not started** |
 
-Everything marked "not yet executed" is blocked only on a running MySQL
-instance, not on missing code.
+The quiz flow has been exercised end to end against a real MySQL 8.4 server:
+scoring, per-question persistence, attempt ownership (403), duplicate submission
+(409), attempt limits (409), and no answer-key leakage through any
+student-facing response.
 
 ## Layout
 
@@ -63,21 +65,27 @@ shows the activity stream that will become
 ```bash
 cd backend
 npm install
-cp .env.example .env          # then set DATABASE_URL
-npx prisma migrate dev --name init
+cp .env.example .env               # then set DATABASE_URL
+npx prisma migrate deploy          # creates the 35 tables
+mysql -u USER -p ilsp_dev < prisma/sql/01_check_constraints.sql
+npm run db:seed
+npm run dev                        # API on http://localhost:4000
+npm test                           # 58 tests, no database required
 ```
 
-Then paste the contents of `prisma/sql/01_check_constraints.sql` at the end of
-the generated `prisma/migrations/<timestamp>_init/migration.sql` and re-run the
-migration against a clean database. Those statements enforce the
-LessonComponent exclusive arc, percentage bounds, and Bangla collation — see the
-file's header for why each one is there. **MySQL below 8.0.16 parses CHECK
-constraints and silently ignores them**, which is worse than not having them.
+The constraints are applied as a **separate step**, not pasted into the
+generated migration. Editing a migration after it has been applied changes its
+checksum and Prisma then reports drift on every subsequent `migrate dev`. Keeping
+them in their own file avoids that and keeps the reason for each one next to it.
 
-```bash
-npm run db:seed
-npm run dev          # API on http://localhost:4000
-npm test             # 25 tests, no database required
+Those statements enforce the LessonComponent exclusive arc, percentage bounds,
+score and page-order sanity, and Bangla collation. **MySQL below 8.0.16 parses
+CHECK constraints and silently ignores them**, which is worse than not having
+them — verify with `SELECT VERSION();`. Confirm they took with:
+
+```sql
+SELECT CONSTRAINT_NAME FROM information_schema.CHECK_CONSTRAINTS
+WHERE CONSTRAINT_SCHEMA = 'ilsp_dev';   -- expect 6 rows
 ```
 
 ## API
@@ -93,6 +101,9 @@ message } }` on failure.
 | GET | `/api/chapters/:id/topics` | Topics with lesson summaries |
 | GET | `/api/lessons/:id?lang=bn\|en` | Returns the LessonSpec the renderers consume |
 | POST | `/api/simulations/:id/activity` | Requires an authenticated student |
+| GET | `/api/quizzes/:id?lang=bn\|en` | Questions and options — **never the answer key** |
+| POST | `/api/quizzes/:id/attempts` | Starts an attempt; enforces the attempt limit |
+| POST | `/api/attempts/:id/submit` | Grades server-side; reveals keys and explanations |
 
 `GET /api/lessons/:id` is a drop-in replacement for
 `frontend/src/data/chapter01.ts` — same shape, so the renderers are unchanged.

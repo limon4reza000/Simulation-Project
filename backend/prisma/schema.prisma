@@ -363,12 +363,24 @@ model LessonComponent {
   /// no reason. The API merges: parameter defaults first, these on top.
   parameterOverrides Json? @map("parameter_overrides")
 
-  lesson        Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  content       LearningContent? @relation(fields: [contentId], references: [id], onDelete: Restrict)
-  visualization Visualization?   @relation(fields: [visualizationId], references: [id], onDelete: Restrict)
-  simulation    Simulation?      @relation(fields: [simulationId], references: [id], onDelete: Restrict)
-  exercise      Exercise?        @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
-  quiz          Quiz?            @relation(fields: [quizId], references: [id], onDelete: Restrict)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  // `onUpdate: NoAction` is required, not stylistic. MySQL refuses to create a
+  // CHECK constraint over a column whose foreign key carries a referential
+  // action, and Prisma defaults every relation to ON UPDATE CASCADE:
+  //
+  //   ERROR 3823: Column 'content_id' cannot be used in a check constraint
+  //   'chk_lesson_component_exactly_one_target': needed in a foreign key
+  //   constraint referential action.
+  //
+  // Without this the exclusive-arc constraint in prisma/sql cannot be applied
+  // at all. Cascading updates were meaningless here anyway — these reference
+  // surrogate integer primary keys, which never change.
+  content       LearningContent? @relation(fields: [contentId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  visualization Visualization?   @relation(fields: [visualizationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  simulation    Simulation?      @relation(fields: [simulationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  exercise      Exercise?        @relation(fields: [exerciseId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  quiz          Quiz?            @relation(fields: [quizId], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   learningActivity LearningActivity[]
 

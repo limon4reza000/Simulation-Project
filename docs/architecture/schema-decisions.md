@@ -165,6 +165,56 @@ Note what this is *not*: a general-purpose settings bag. Anything that belongs
 to the instrument itself still belongs in `SimulationParameter`, where it is
 typed, bounded and labelled in both languages.
 
+## 14. `onUpdate: NoAction` on the LessonComponent target FKs
+
+**Found by running the migration against a real MySQL 8.4 server**, not by
+reading the schema. The first live `prisma migrate deploy` failed outright:
+
+```
+ERROR 3823: Column 'content_id' cannot be used in a check constraint
+'chk_lesson_component_exactly_one_target': needed in a foreign key
+constraint referential action.
+```
+
+MySQL refuses to create a CHECK constraint over any column whose foreign key
+carries a referential action, and Prisma defaults every relation to
+`ON UPDATE CASCADE`. So the exclusive-arc constraint — decision 10, the one
+that makes the five-nullable-FK design defensible — **could not be applied at
+all** as originally written. The schema was valid, the SQL file was valid, and
+the combination was impossible.
+
+The fix is `onUpdate: NoAction` on all five target relations. This costs
+nothing: they reference surrogate integer primary keys, which never change, so
+cascading updates were meaningless.
+
+The lesson worth carrying: `prisma validate` proves the schema parses, not that
+the database will accept it. Nothing short of applying a migration to the real
+engine would have caught this.
+
+### Verified enforcing, on MySQL 8.4.9
+
+| Attempted write | Result |
+|---|---|
+| LessonComponent with two targets set | rejected — `chk_lesson_component_exactly_one_target` |
+| LessonComponent with no target set | rejected — same constraint |
+| `componentType` disagreeing with the target | rejected — `chk_lesson_component_type_matches_target` |
+| LessonComponent with exactly one target | accepted |
+| `completion_percent` of 150 or −10 | rejected — percent range checks |
+| Negative quiz score | rejected |
+| `page_end` before `page_start` | rejected |
+| Second PUBLISHED Bangla version of one content item | rejected — duplicate `1-BN` |
+| Several unpublished drafts of the same content | accepted (NULLs do not collide) |
+| Bangla and English published side by side | accepted |
+
+The last three confirm decision 4 behaves as intended on the real engine.
+
+### Minor: `last_activity_at` has no database default
+
+`@updatedAt` is applied by Prisma, not by MySQL, so raw SQL inserts into the
+progress tables fail with "field doesn't have a default value". Harmless while
+every write goes through Prisma, but worth knowing before writing any
+maintenance SQL or bulk import.
+
 ## Tooling note: Prisma 6, not 7
 
 Prisma 7 moves the datasource connection URL out of `schema.prisma` and into a
