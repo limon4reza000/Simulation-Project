@@ -1,0 +1,758 @@
+// Interactive Learning and Simulation Platform
+// Prisma schema — MySQL
+//
+// This schema is the corrected implementation of the design in Chapter 6 of the
+// project documentation. Every deviation from that chapter is deliberate and is
+// explained in docs/architecture/schema-decisions.md. Do not "fix" the schema
+// back toward the document without reading that file first.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// Content lifecycle from documentation section 13.3.
+enum ContentStatus {
+  DRAFT
+  REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Language {
+  BN
+  EN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum ComponentType {
+  EXPLANATION
+  DIAGRAM
+  VISUALIZATION
+  SIMULATION
+  EXERCISE
+  QUIZ
+}
+
+enum QuestionType {
+  MCQ_SINGLE
+  MCQ_MULTI
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  ABANDONED
+}
+
+enum ValidationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ParameterDataType {
+  INT
+  FLOAT
+  BOOLEAN
+  ENUM
+}
+
+// ---------------------------------------------------------------------------
+// Identity and access
+// ---------------------------------------------------------------------------
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  code  String @unique @db.VarChar(32) // STUDENT | TEACHER | ADMIN
+  name  String @db.VarChar(64)
+  users User[]
+
+  @@map("role")
+}
+
+model User {
+  id                Int        @id @default(autoincrement())
+  roleId            Int        @map("role_id")
+  name              String     @db.VarChar(120)
+  email             String     @unique @db.VarChar(190)
+  passwordHash      String     @map("password_hash") @db.VarChar(255)
+  status            UserStatus @default(ACTIVE)
+  preferredLanguage Language   @default(BN) @map("preferred_language")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  role    Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  student Student?
+  teacher Teacher?
+
+  authoredVersions ContentVersion[]    @relation("ContentVersionAuthor")
+  validationsMade  ContentValidation[] @relation("ContentValidationReviewer")
+  auditLogs        AuditLog[]
+  notifications    Notification[]
+
+  @@index([roleId])
+  @@map("user")
+}
+
+model Student {
+  userId      Int      @id @map("user_id")
+  classId     Int      @map("class_id")
+  studentCode String   @unique @map("student_code") @db.VarChar(32)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  class Class @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  quizAttempts     QuizAttempt[]
+  lessonProgress   LessonProgress[]
+  topicProgress    TopicProgress[]
+  subjectProgress  SubjectProgress[]
+  learningActivity LearningActivity[]
+  achievements     StudentAchievement[]
+
+  @@index([classId])
+  @@map("student")
+}
+
+model Teacher {
+  userId       Int      @id @map("user_id")
+  employeeCode String   @unique @map("employee_code") @db.VarChar(32)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments TeacherAssignment[]
+
+  @@map("teacher")
+}
+
+/// MISSING FROM THE DOCUMENTATION. Chapter 17.2 requires teachers to see only
+/// "assigned" classes and FR-019 manages class membership, but no entity mapped
+/// teachers to classes. Without this table the teacher authorization scope in
+/// TC-TEACH-01 and TC-SEC-01 cannot be enforced at all.
+///
+/// subjectId is nullable so the same table serves both cases:
+///   - homeroom teacher for a whole primary class  -> subjectId = NULL
+///   - subject teacher for one class               -> subjectId = set
+model TeacherAssignment {
+  id            Int      @id @default(autoincrement())
+  teacherUserId Int      @map("teacher_user_id")
+  classId       Int      @map("class_id")
+  subjectId     Int?     @map("subject_id")
+  assignedAt    DateTime @default(now()) @map("assigned_at")
+
+  teacher Teacher  @relation(fields: [teacherUserId], references: [userId], onDelete: Cascade)
+  class   Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherUserId, classId, subjectId])
+  @@index([classId])
+  @@index([subjectId])
+  @@map("teacher_assignment")
+}
+
+// ---------------------------------------------------------------------------
+// Academic hierarchy
+//
+// Every level carries titleBn/titleEn. The documentation only made lesson
+// *content* bilingual and forgot that navigation labels are the first Bangla
+// text a student ever reads.
+// ---------------------------------------------------------------------------
+
+model Class {
+  id        Int           @id @default(autoincrement())
+  level     Int           @unique // 1..10, the stable identifier
+  nameBn    String        @map("name_bn") @db.VarChar(120)
+  nameEn    String        @map("name_en") @db.VarChar(120)
+  status    ContentStatus @default(DRAFT)
+  deletedAt DateTime?     @map("deleted_at")
+
+  students      Student[]
+  classSubjects ClassSubject[]
+  assignments   TeacherAssignment[]
+  textbooks     Textbook[]
+
+  @@index([status])
+  @@map("class")
+}
+
+model Subject {
+  id        Int           @id @default(autoincrement())
+  code      String        @unique @db.VarChar(32)
+  nameBn    String        @map("name_bn") @db.VarChar(120)
+  nameEn    String        @map("name_en") @db.VarChar(120)
+  status    ContentStatus @default(DRAFT)
+  deletedAt DateTime?     @map("deleted_at")
+
+  classSubjects   ClassSubject[]
+  chapters        Chapter[]
+  assignments     TeacherAssignment[]
+  textbooks       Textbook[]
+  subjectProgress SubjectProgress[]
+
+  @@index([status])
+  @@map("subject")
+}
+
+model ClassSubject {
+  classId   Int @map("class_id")
+  subjectId Int @map("subject_id")
+
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([classId, subjectId])
+  @@index([subjectId])
+  @@map("class_subject")
+}
+
+model Chapter {
+  id           Int           @id @default(autoincrement())
+  subjectId    Int           @map("subject_id")
+  titleBn      String        @map("title_bn") @db.VarChar(255)
+  titleEn      String        @map("title_en") @db.VarChar(255)
+  displayOrder Int           @map("display_order")
+  status       ContentStatus @default(DRAFT)
+  deletedAt    DateTime?     @map("deleted_at")
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  topics  Topic[]
+
+  @@unique([subjectId, displayOrder])
+  @@index([status])
+  @@map("chapter")
+}
+
+model Topic {
+  id           Int           @id @default(autoincrement())
+  chapterId    Int           @map("chapter_id")
+  titleBn      String        @map("title_bn") @db.VarChar(255)
+  titleEn      String        @map("title_en") @db.VarChar(255)
+  displayOrder Int           @map("display_order")
+  status       ContentStatus @default(DRAFT)
+  deletedAt    DateTime?     @map("deleted_at")
+
+  chapter       Chapter         @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  lessons       Lesson[]
+  topicProgress TopicProgress[]
+
+  @@unique([chapterId, displayOrder])
+  @@index([status])
+  @@map("topic")
+}
+
+model Lesson {
+  id           Int           @id @default(autoincrement())
+  topicId      Int           @map("topic_id")
+  titleBn      String        @map("title_bn") @db.VarChar(255)
+  titleEn      String        @map("title_en") @db.VarChar(255)
+  summaryBn    String?       @map("summary_bn") @db.Text
+  summaryEn    String?       @map("summary_en") @db.Text
+  displayOrder Int           @map("display_order")
+  status       ContentStatus @default(DRAFT)
+  publishedAt  DateTime?     @map("published_at")
+  deletedAt    DateTime?     @map("deleted_at")
+
+  topic            Topic              @relation(fields: [topicId], references: [id], onDelete: Restrict)
+  components       LessonComponent[]
+  lessonProgress   LessonProgress[]
+  learningActivity LearningActivity[]
+
+  @@unique([topicId, displayOrder])
+  @@index([status])
+  @@map("lesson")
+}
+
+// ---------------------------------------------------------------------------
+// Learning content and versioning
+//
+// LearningContent is the language-NEUTRAL logical concept. All prose, media and
+// language live on ContentVersion. The documentation put `language` on both,
+// which made it ambiguous where a Bangla variant actually lives.
+// ---------------------------------------------------------------------------
+
+model LearningContent {
+  id          Int           @id @default(autoincrement())
+  contentType String        @map("content_type") @db.VarChar(48)
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  deletedAt   DateTime?     @map("deleted_at")
+
+  versions   ContentVersion[]
+  components LessonComponent[]
+
+  @@index([status])
+  @@map("learning_content")
+}
+
+model ContentVersion {
+  id            Int      @id @default(autoincrement())
+  contentId     Int      @map("content_id")
+  versionNo     Int      @map("version_no")
+  language      Language
+  body          String   @db.Text
+  mediaUrl      String?  @map("media_url") @db.VarChar(512)
+  changeSummary String?  @map("change_summary") @db.VarChar(512)
+  createdById   Int      @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  /// Set to the language value when this version is the live published one,
+  /// NULL otherwise. MySQL unique indexes permit unlimited NULLs, so the
+  /// unique constraint below enforces "at most one published version per
+  /// (content, language)" without a trigger or a partial index.
+  publishedForLanguage Language? @map("published_for_language")
+
+  content     LearningContent     @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  createdBy   User                @relation("ContentVersionAuthor", fields: [createdById], references: [id], onDelete: Restrict)
+  validations ContentValidation[]
+
+  @@unique([contentId, versionNo])
+  @@unique([contentId, publishedForLanguage])
+  @@index([createdById])
+  @@map("content_version")
+}
+
+// ---------------------------------------------------------------------------
+// Lesson composition
+// ---------------------------------------------------------------------------
+
+/// Exactly one of the five target FKs must be non-null, and it must agree with
+/// componentType. Prisma cannot express CHECK constraints, so the arity rule is
+/// added by hand in the migration (see docs/architecture/schema-decisions.md)
+/// and the type-agreement rule is enforced in the content service.
+model LessonComponent {
+  id            Int           @id @default(autoincrement())
+  lessonId      Int           @map("lesson_id")
+  componentType ComponentType @map("component_type")
+  displayOrder  Int           @map("display_order")
+
+  contentId       Int? @map("content_id")
+  visualizationId Int? @map("visualization_id")
+  simulationId    Int? @map("simulation_id")
+  exerciseId      Int? @map("exercise_id")
+  quizId          Int? @map("quiz_id")
+
+  lesson        Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  content       LearningContent? @relation(fields: [contentId], references: [id], onDelete: Restrict)
+  visualization Visualization?   @relation(fields: [visualizationId], references: [id], onDelete: Restrict)
+  simulation    Simulation?      @relation(fields: [simulationId], references: [id], onDelete: Restrict)
+  exercise      Exercise?        @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  quiz          Quiz?            @relation(fields: [quizId], references: [id], onDelete: Restrict)
+
+  learningActivity LearningActivity[]
+
+  @@unique([lessonId, displayOrder])
+  @@index([contentId])
+  @@index([visualizationId])
+  @@index([simulationId])
+  @@index([exerciseId])
+  @@index([quizId])
+  @@map("lesson_component")
+}
+
+// ---------------------------------------------------------------------------
+// Interactive assets
+// ---------------------------------------------------------------------------
+
+model Visualization {
+  id            Int           @id @default(autoincrement())
+  type          String        @db.VarChar(64) // registry key, e.g. ALGORITHM_SORT
+  configuration Json
+  version       Int           @default(1)
+  status        ContentStatus @default(DRAFT)
+
+  components LessonComponent[]
+
+  @@index([type])
+  @@index([status])
+  @@map("visualization")
+}
+
+model Simulation {
+  id            Int           @id @default(autoincrement())
+  type          String        @db.VarChar(64) // registry key, e.g. PHYSICS_PROJECTILE
+  configuration Json
+  version       Int           @default(1)
+  status        ContentStatus @default(DRAFT)
+
+  parameters SimulationParameter[]
+  components LessonComponent[]
+
+  @@index([type])
+  @@index([status])
+  @@map("simulation")
+}
+
+model SimulationParameter {
+  id           Int               @id @default(autoincrement())
+  simulationId Int               @map("simulation_id")
+  name         String            @db.VarChar(64)
+  labelBn      String            @map("label_bn") @db.VarChar(120)
+  labelEn      String            @map("label_en") @db.VarChar(120)
+  dataType     ParameterDataType @map("data_type")
+  defaultValue String            @map("default_value") @db.VarChar(64)
+  minValue     String?           @map("min_value") @db.VarChar(64)
+  maxValue     String?           @map("max_value") @db.VarChar(64)
+  stepValue    String?           @map("step_value") @db.VarChar(64)
+
+  simulation Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+
+  @@unique([simulationId, name])
+  @@map("simulation_parameter")
+}
+
+model Exercise {
+  id             Int           @id @default(autoincrement())
+  titleBn        String        @map("title_bn") @db.VarChar(255)
+  titleEn        String        @map("title_en") @db.VarChar(255)
+  instructionsBn String        @map("instructions_bn") @db.Text
+  instructionsEn String        @map("instructions_en") @db.Text
+  configuration  Json
+  status         ContentStatus @default(DRAFT)
+
+  components LessonComponent[]
+
+  @@index([status])
+  @@map("exercise")
+}
+
+// ---------------------------------------------------------------------------
+// Assessment
+// ---------------------------------------------------------------------------
+
+model Question {
+  id            Int           @id @default(autoincrement())
+  type          QuestionType
+  promptBn      String        @map("prompt_bn") @db.Text
+  promptEn      String        @map("prompt_en") @db.Text
+  optionsJson   Json?         @map("options_json")
+  answerConfig  Json          @map("answer_config")
+  explanationBn String?       @map("explanation_bn") @db.Text
+  explanationEn String?       @map("explanation_en") @db.Text
+  difficulty    Int?
+  status        ContentStatus @default(DRAFT)
+
+  quizQuestions QuizQuestion[]
+  answers       QuizAttemptAnswer[]
+
+  @@index([status])
+  @@index([difficulty])
+  @@map("question")
+}
+
+/// Quizzes attach to the hierarchy through LessonComponent only. The
+/// documentation also gave Quiz a nullable topic_id, which created two
+/// independent paths to the same quiz and made "which topic does this score
+/// belong to" ambiguous. Topic is now always derived:
+///   quiz -> lesson_component -> lesson -> topic
+model Quiz {
+  id           Int           @id @default(autoincrement())
+  titleBn      String        @map("title_bn") @db.VarChar(255)
+  titleEn      String        @map("title_en") @db.VarChar(255)
+  timeLimitSec Int?          @map("time_limit_sec")
+  attemptLimit Int?          @map("attempt_limit")
+  passMark     Int?          @map("pass_mark")
+  status       ContentStatus @default(DRAFT)
+
+  questions  QuizQuestion[]
+  attempts   QuizAttempt[]
+  components LessonComponent[]
+
+  @@index([status])
+  @@map("quiz")
+}
+
+model QuizQuestion {
+  quizId       Int @map("quiz_id")
+  questionId   Int @map("question_id")
+  displayOrder Int @map("display_order")
+  marks        Int @default(1)
+
+  quiz     Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@id([quizId, questionId])
+  @@unique([quizId, displayOrder])
+  @@index([questionId])
+  @@map("quiz_question")
+}
+
+model QuizAttempt {
+  id            Int           @id @default(autoincrement())
+  quizId        Int           @map("quiz_id")
+  studentUserId Int           @map("student_user_id")
+  startedAt     DateTime      @default(now()) @map("started_at")
+  submittedAt   DateTime?     @map("submitted_at")
+  score         Decimal?      @db.Decimal(6, 2)
+  maxScore      Decimal?      @map("max_score") @db.Decimal(6, 2)
+  status        AttemptStatus @default(IN_PROGRESS)
+
+  quiz    Quiz                @relation(fields: [quizId], references: [id], onDelete: Restrict)
+  student Student             @relation(fields: [studentUserId], references: [userId], onDelete: Cascade)
+  answers QuizAttemptAnswer[]
+
+  @@index([quizId])
+  @@index([studentUserId, submittedAt])
+  @@map("quiz_attempt")
+}
+
+/// Not in the documentation. Without per-question answers a submitted attempt
+/// stores only a number, so the Result screen in Chapter 21 cannot show a
+/// correct/incorrect breakdown and FR-018 weak-topic identification has nothing
+/// to work from.
+model QuizAttemptAnswer {
+  id           Int      @id @default(autoincrement())
+  attemptId    Int      @map("attempt_id")
+  questionId   Int      @map("question_id")
+  response     Json
+  isCorrect    Boolean? @map("is_correct")
+  marksAwarded Decimal? @map("marks_awarded") @db.Decimal(6, 2)
+  answeredAt   DateTime @default(now()) @map("answered_at")
+
+  attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@unique([attemptId, questionId])
+  @@index([questionId])
+  @@map("quiz_attempt_answer")
+}
+
+// ---------------------------------------------------------------------------
+// Progress
+//
+// The documentation's StudentProgress used polymorphic target_type/target_id
+// with no foreign key, which directly contradicted its own integrity rule that
+// "progress records must not exist for deleted/nonexistent targets" and NFR-013.
+// It is replaced by three concrete, referentially-sound tables. Overall progress
+// is computed from these, not stored.
+// ---------------------------------------------------------------------------
+
+model LessonProgress {
+  studentUserId    Int            @map("student_user_id")
+  lessonId         Int            @map("lesson_id")
+  status           ProgressStatus @default(NOT_STARTED)
+  completedAt      DateTime?      @map("completed_at")
+  timeSpentSeconds Int            @default(0) @map("time_spent_seconds")
+  lastActivityAt   DateTime       @updatedAt @map("last_activity_at")
+
+  student Student @relation(fields: [studentUserId], references: [userId], onDelete: Cascade)
+  lesson  Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@id([studentUserId, lessonId])
+  @@index([lessonId])
+  @@map("lesson_progress")
+}
+
+model TopicProgress {
+  studentUserId     Int      @map("student_user_id")
+  topicId           Int      @map("topic_id")
+  completionPercent Decimal  @default(0) @map("completion_percent") @db.Decimal(5, 2)
+  scoreAvg          Decimal? @map("score_avg") @db.Decimal(5, 2)
+  attempts          Int      @default(0)
+  timeSpentSeconds  Int      @default(0) @map("time_spent_seconds")
+  lastActivityAt    DateTime @updatedAt @map("last_activity_at")
+
+  student Student @relation(fields: [studentUserId], references: [userId], onDelete: Cascade)
+  topic   Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([studentUserId, topicId])
+  @@index([topicId])
+  @@map("topic_progress")
+}
+
+model SubjectProgress {
+  studentUserId     Int      @map("student_user_id")
+  subjectId         Int      @map("subject_id")
+  completionPercent Decimal  @default(0) @map("completion_percent") @db.Decimal(5, 2)
+  lastActivityAt    DateTime @updatedAt @map("last_activity_at")
+
+  student Student @relation(fields: [studentUserId], references: [userId], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([studentUserId, subjectId])
+  @@index([subjectId])
+  @@map("subject_progress")
+}
+
+/// Backs POST /api/simulations/:id/activity. Keep the payload minimal — these
+/// are children, and Chapter 20 should be recording data minimisation as a
+/// control, not collecting every interaction because it is technically possible.
+model LearningActivity {
+  id            Int      @id @default(autoincrement())
+  studentUserId Int      @map("student_user_id")
+  lessonId      Int?     @map("lesson_id")
+  componentId   Int?     @map("component_id")
+  activityType  String   @map("activity_type") @db.VarChar(48)
+  metadata      Json?
+  occurredAt    DateTime @default(now()) @map("occurred_at")
+
+  student   Student          @relation(fields: [studentUserId], references: [userId], onDelete: Cascade)
+  lesson    Lesson?          @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  component LessonComponent? @relation(fields: [componentId], references: [id], onDelete: SetNull)
+
+  @@index([studentUserId, occurredAt])
+  @@index([lessonId])
+  @@index([componentId])
+  @@map("learning_activity")
+}
+
+// ---------------------------------------------------------------------------
+// Textbook sourcing and validation
+// ---------------------------------------------------------------------------
+
+/// Textbook now hangs off the academic hierarchy. In the documentation it
+/// floated free, so there was no query answering "which book backs Class 7
+/// Science?" — the exact question the validation workflow exists to serve.
+model Textbook {
+  id              Int           @id @default(autoincrement())
+  classId         Int           @map("class_id")
+  subjectId       Int           @map("subject_id")
+  title           String        @db.VarChar(255)
+  edition         String?       @db.VarChar(64)
+  publicationYear Int?          @map("publication_year")
+  language        Language
+  sourceFile      String?       @map("source_file") @db.VarChar(512)
+  status          ContentStatus @default(DRAFT)
+
+  class      Class               @relation(fields: [classId], references: [id], onDelete: Restrict)
+  subject    Subject             @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  references TextbookReference[]
+
+  @@index([classId, subjectId])
+  @@map("textbook")
+}
+
+model TextbookReference {
+  id            Int     @id @default(autoincrement())
+  textbookId    Int     @map("textbook_id")
+  chapterLabel  String? @map("chapter_label") @db.VarChar(255)
+  topicLabel    String? @map("topic_label") @db.VarChar(255)
+  pageStart     Int?    @map("page_start")
+  pageEnd       Int?    @map("page_end")
+  referenceText String? @map("reference_text") @db.Text
+  version       Int     @default(1)
+
+  textbook    Textbook            @relation(fields: [textbookId], references: [id], onDelete: Cascade)
+  validations ContentValidation[]
+
+  @@index([textbookId])
+  @@map("textbook_reference")
+}
+
+/// The publication gate (FR-030 / section 14.4). A ContentVersion may only move
+/// to PUBLISHED when it has a ContentValidation row with status APPROVED. That
+/// rule is enforced in the validation service and covered by TC-VAL-01; the
+/// schema guarantees only that every decision names a reviewer and a source.
+model ContentValidation {
+  id                  Int              @id @default(autoincrement())
+  contentVersionId    Int              @map("content_version_id")
+  textbookReferenceId Int              @map("textbook_reference_id")
+  validatorUserId     Int              @map("validator_user_id")
+  status              ValidationStatus @default(PENDING)
+  validationDate      DateTime?        @map("validation_date")
+  notes               String?          @db.Text
+  createdAt           DateTime         @default(now()) @map("created_at")
+
+  contentVersion    ContentVersion    @relation(fields: [contentVersionId], references: [id], onDelete: Cascade)
+  textbookReference TextbookReference @relation(fields: [textbookReferenceId], references: [id], onDelete: Restrict)
+  validator         User              @relation("ContentValidationReviewer", fields: [validatorUserId], references: [id], onDelete: Restrict)
+
+  @@index([contentVersionId, status])
+  @@index([textbookReferenceId])
+  @@index([validatorUserId])
+  @@map("content_validation")
+}
+
+// ---------------------------------------------------------------------------
+// Operational
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?     @map("user_id")
+  action     String   @db.VarChar(64)
+  entityType String   @map("entity_type") @db.VarChar(64)
+  entityId   String   @map("entity_id") @db.VarChar(64)
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2 — not part of the MVP build order.
+// Present so the schema still matches the entity list in the report, but no
+// MVP endpoint or screen depends on them. Build these only after the full
+// learn -> practise -> assess -> progress loop works end to end.
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  type      String    @db.VarChar(48)
+  titleBn   String    @map("title_bn") @db.VarChar(255)
+  titleEn   String    @map("title_en") @db.VarChar(255)
+  bodyBn    String?   @map("body_bn") @db.Text
+  bodyEn    String?   @map("body_en") @db.Text
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notification")
+}
+
+model Achievement {
+  id             Int           @id @default(autoincrement())
+  code           String        @unique @db.VarChar(48)
+  nameBn         String        @map("name_bn") @db.VarChar(120)
+  nameEn         String        @map("name_en") @db.VarChar(120)
+  criteriaConfig Json          @map("criteria_config")
+  status         ContentStatus @default(DRAFT)
+
+  students StudentAchievement[]
+
+  @@map("achievement")
+}
+
+model StudentAchievement {
+  studentUserId Int      @map("student_user_id")
+  achievementId Int      @map("achievement_id")
+  awardedAt     DateTime @default(now()) @map("awarded_at")
+
+  student     Student     @relation(fields: [studentUserId], references: [userId], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@id([studentUserId, achievementId])
+  @@index([achievementId])
+  @@map("student_achievement")
+}

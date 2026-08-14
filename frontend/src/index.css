@@ -1,0 +1,4 @@
+/* Base reset. Component styles live in styles.css. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { min-height: 100%; }
+body { margin: 0; }
