@@ -102,10 +102,60 @@ export function useLessonSource() {
       if (source === 'api') {
         return fetchLesson(lessonId, language, signal)
       }
-      return chapter01Lessons.find((l) => l.id === lessonId)
+      const fixture = chapter01Lessons.find((l) => l.id === lessonId)
+      return fixture ? localiseFixture(fixture, language) : undefined
     },
     [source],
   )
 
   return { source, index, loadLesson }
+}
+
+/**
+ * The API localises quiz text server-side, so a live LessonSpec already carries
+ * one `text` per option. Fixtures hold both languages, so they need collapsing
+ * here — this keeps QuizRunner unaware that fixtures exist.
+ */
+function localiseFixture(lesson: LessonSpec, language: Language): LessonSpec {
+  if (!lesson.components.some((c) => c.rendererType === 'QUIZ_RUNNER')) {
+    return lesson
+  }
+
+  return {
+    ...lesson,
+    components: lesson.components.map((component) => {
+      if (component.rendererType !== 'QUIZ_RUNNER') return component
+      const config = component.config as
+        | { questions?: FixtureQuestion[] }
+        | undefined
+      if (!config?.questions) return component
+
+      return {
+        ...component,
+        config: {
+          ...component.config,
+          questions: config.questions.map((question) => ({
+            ...question,
+            prompt:
+              language === 'EN' && question.promptEn
+                ? question.promptEn
+                : question.prompt,
+            options: question.options.map((option) => ({
+              key: option.key,
+              text:
+                language === 'EN' && option.textEn ? option.textEn : option.text,
+            })),
+          })),
+        },
+      }
+    }),
+  }
+}
+
+interface FixtureQuestion {
+  id: number
+  prompt: string
+  promptEn?: string
+  options: { key: string; text: string; textEn?: string }[]
+  [key: string]: unknown
 }

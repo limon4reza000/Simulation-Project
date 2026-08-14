@@ -6,6 +6,7 @@ import { createAuthContext } from './lib/auth'
 import { createCatalogRouter } from './routes/catalog'
 import { createLessonRouter } from './routes/lessons'
 import { createActivityRouter } from './routes/activity'
+import { createQuizRouter } from './routes/quizzes'
 
 export interface AppOptions {
   prisma: PrismaClient
@@ -42,6 +43,7 @@ export function createApp({
   app.use('/api', createCatalogRouter(prisma))
   app.use('/api', createLessonRouter(prisma))
   app.use('/api', createActivityRouter(prisma))
+  app.use('/api', createQuizRouter(prisma))
 
   app.use(notFoundHandler)
   app.use(errorHandler)

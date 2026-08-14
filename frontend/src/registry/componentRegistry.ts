@@ -2,6 +2,7 @@ import VernierCaliper from '../components/instruments/VernierCaliper'
 import ScrewGauge from '../components/instruments/ScrewGauge'
 import ErrorPropagationLab from '../components/measurement/ErrorPropagationLab'
 import LogScaleExplorer from '../components/viz/LogScaleExplorer'
+import QuizRunner from '../components/assessment/QuizRunner'
 import type { Renderer } from './types'
 
 /**
@@ -21,6 +22,7 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_SCREW_GAUGE: ScrewGauge as unknown as Renderer,
   SIM_ERROR_PROPAGATION: ErrorPropagationLab as unknown as Renderer,
   VIZ_LOG_SCALE_EXPLORER: LogScaleExplorer as unknown as Renderer,
+  QUIZ_RUNNER: QuizRunner as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {

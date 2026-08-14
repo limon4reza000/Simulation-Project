@@ -1,4 +1,5 @@
 import type { LessonSpec } from '../registry/types'
+import { chapter01QuizLesson } from './chapter01Quiz'
 
 /**
  * Demo lesson specs for Physics 9–10, Chapter 1 — ভৌত রাশি এবং তাদের পরিমাপ.
@@ -171,4 +172,5 @@ export const chapter01Lessons: LessonSpec[] = [
       },
     ],
   },
+  chapter01QuizLesson,
 ]

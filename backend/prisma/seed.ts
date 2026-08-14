@@ -9,7 +9,15 @@
  * Idempotent — safe to re-run. `npx prisma db seed`.
  */
 
-import { PrismaClient, ContentStatus, Language, ComponentType, ValidationStatus, ParameterDataType } from '@prisma/client'
+import {
+  PrismaClient,
+  ContentStatus,
+  Language,
+  ComponentType,
+  ValidationStatus,
+  ParameterDataType,
+  QuestionType,
+} from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -467,10 +475,158 @@ async function main() {
     skipDuplicates: true,
   })
 
+  // ---- chapter assessment (নমুনা প্রশ্ন, book pp. 29–30) ---------------
+  //
+  // IMPORTANT: the textbook prints the questions but NOT an answer key. Every
+  // `correct` value below is DERIVED — either from a statement elsewhere in the
+  // book (cited per question) or by computation. They must be reviewed by a
+  // teacher before this quiz is used for real assessment. That review is
+  // exactly what ContentValidation exists to record.
+  //
+  // Question 4 on p. 30 is NOT seeded. As printed, options (ক) and (গ) are both
+  // "4.07 cm" — which is also the correct answer (M = 4 cm, V = 7, VC = 0.1 mm
+  // gives 40.7 mm). The question is unanswerable as printed, so it is reported
+  // rather than silently "fixed": inventing which option was meant would be
+  // exactly the fabrication the content policy forbids.
+  const mcqs = [
+    {
+      promptBn: 'কোয়ান্টাম তত্ত্ব প্রথম কে প্রদান করেন?',
+      promptEn: 'Who first proposed quantum theory?',
+      options: [
+        { key: 'ka', textBn: 'প্ল্যাঙ্ক', textEn: 'Planck' },
+        { key: 'kha', textBn: 'আইনস্টাইন', textEn: 'Einstein' },
+        { key: 'ga', textBn: 'রাদারফোর্ড', textEn: 'Rutherford' },
+        { key: 'gha', textBn: 'হাইজেনবার্গ', textEn: 'Heisenberg' },
+      ],
+      correct: ['ka'],
+      explanationBn: 'পাঠ্যবই পৃষ্ঠা ৮: ১৯০০ সালে ম্যাক্স প্ল্যাঙ্ক কোয়ান্টাম তত্ত্ব আবিষ্কার করেন।',
+      explanationEn: 'Book p. 8: Max Planck discovered quantum theory in 1900.',
+      page: 29,
+    },
+    {
+      promptBn: 'বোজন কার নাম থেকে এসেছে?',
+      promptEn: 'Whose name does the boson come from?',
+      options: [
+        { key: 'ka', textBn: 'জগদীশচন্দ্র বসু', textEn: 'Jagadish Chandra Bose' },
+        { key: 'kha', textBn: 'সুভাষচন্দ্র বসু', textEn: 'Subhas Chandra Bose' },
+        { key: 'ga', textBn: 'সত্যেন্দ্রনাথ বসু', textEn: 'Satyendra Nath Bose' },
+        { key: 'gha', textBn: 'শরৎচন্দ্র বসু', textEn: 'Sarat Chandra Bose' },
+      ],
+      correct: ['ga'],
+      explanationBn:
+        'পাঠ্যবই পৃষ্ঠা ৮: সত্যেন্দ্রনাথ বসুর অবদানের স্বীকৃতিস্বরূপ মৌলিক কণাকে বোজন নাম দেওয়া হয়।',
+      explanationEn:
+        'Book p. 8: the particle class was named boson in recognition of Satyendra Nath Bose.',
+      page: 29,
+    },
+    {
+      promptBn: 'নিচের কোনটি মৌলিক রাশি নয়?',
+      promptEn: 'Which of the following is NOT a base quantity?',
+      options: [
+        { key: 'ka', textBn: 'ভর', textEn: 'Mass' },
+        { key: 'kha', textBn: 'তাপ', textEn: 'Heat' },
+        { key: 'ga', textBn: 'তড়িৎ প্রবাহ', textEn: 'Electric current' },
+        { key: 'gha', textBn: 'পদার্থের পরিমাণ', textEn: 'Amount of substance' },
+      ],
+      correct: ['kha'],
+      explanationBn:
+        'টেবিল ১.০১ (পৃষ্ঠা ১৪) অনুযায়ী সাতটি মৌলিক রাশির মধ্যে তাপ নেই; তাপ একটি লব্ধ রাশি।',
+      explanationEn:
+        'Table 1.01 (p. 14) lists the seven base quantities; heat is not among them.',
+      page: 29,
+    },
+    {
+      promptBn:
+        'রফিক স্কেল দিয়ে একটি পেন্সিলের দৈর্ঘ্য ১৫ cm পরিমাপ করল (চূড়ান্ত ত্রুটি ০.৫ cm)। আপেক্ষিক ত্রুটি কত?',
+      promptEn:
+        'Rafiq measures a pencil as 15 cm with an absolute error of 0.5 cm. What is the relative error?',
+      options: [
+        { key: 'ka', textBn: '১৫.৫%', textEn: '15.5%' },
+        { key: 'kha', textBn: '১৪.৫%', textEn: '14.5%' },
+        { key: 'ga', textBn: '৩.৪৪%', textEn: '3.44%' },
+        { key: 'gha', textBn: '৩.৩৩%', textEn: '3.33%' },
+      ],
+      correct: ['gha'],
+      explanationBn: 'আপেক্ষিক ত্রুটি = ০.৫ ÷ ১৫ × ১০০ = ৩.৩৩%।',
+      explanationEn: 'Relative error = 0.5 / 15 x 100 = 3.33%.',
+      page: 30,
+    },
+    {
+      promptBn:
+        'একটি ব্লক (৭ cm × ৬ cm × ৪ cm) এবং একটি গোলকের (ব্যাসার্ধ ৩ cm) আয়তনের অনুপাত কত?',
+      promptEn:
+        'What is the ratio of the volumes of a block (7 x 6 x 4 cm) and a sphere of radius 3 cm?',
+      options: [
+        { key: 'ka', textBn: '১ : ০.৬৭৩', textEn: '1 : 0.673' },
+        { key: 'kha', textBn: '১ : ০.০৬৭৩', textEn: '1 : 0.0673' },
+        { key: 'ga', textBn: '১ : ০.৭৬৩', textEn: '1 : 0.763' },
+        { key: 'gha', textBn: '১ : ০.৬৩৭', textEn: '1 : 0.637' },
+      ],
+      correct: ['ka'],
+      explanationBn:
+        'ব্লকের আয়তন = ১৬৮ cm³; গোলকের আয়তন = (৪/৩)πr³ = ১১৩.১ cm³; অনুপাত ১ : ০.৬৭৩।',
+      explanationEn:
+        'Block = 168 cm³; sphere = (4/3)πr³ = 113.1 cm³; ratio 1 : 0.673.',
+      page: 30,
+    },
+  ]
+
+  const quiz = await prisma.quiz.create({
+    data: {
+      titleBn: 'প্রথম অধ্যায় — নমুনা প্রশ্ন',
+      titleEn: 'Chapter 1 — Sample Questions',
+      attemptLimit: 3,
+      passMark: 3,
+      status: ContentStatus.PUBLISHED,
+    },
+  })
+
+  for (const [index, mcq] of mcqs.entries()) {
+    const created = await prisma.question.create({
+      data: {
+        type: QuestionType.MCQ_SINGLE,
+        promptBn: mcq.promptBn,
+        promptEn: mcq.promptEn,
+        optionsJson: mcq.options,
+        answerConfig: { correct: mcq.correct },
+        explanationBn: mcq.explanationBn,
+        explanationEn: mcq.explanationEn,
+        status: ContentStatus.PUBLISHED,
+      },
+    })
+    await prisma.quizQuestion.create({
+      data: {
+        quizId: quiz.id,
+        questionId: created.id,
+        displayOrder: index + 1,
+        marks: 1,
+      },
+    })
+  }
+
+  const assessmentLesson = await lesson(9, 2, 'অধ্যায় মূল্যায়ন', 'Chapter Assessment')
+  await prisma.lessonComponent.createMany({
+    data: [
+      {
+        lessonId: assessmentLesson.id,
+        componentType: ComponentType.QUIZ,
+        displayOrder: 1,
+        quizId: quiz.id,
+      },
+    ],
+    skipDuplicates: true,
+  })
+
+  console.log(
+    `Seeded ${mcqs.length} of 6 printed MCQs. Question 4 (p. 30) skipped: ` +
+      'options (ka) and (ga) are both "4.07 cm" in the printed book.',
+  )
+
   const counts = {
     classes: await prisma.class.count(),
     topics: await prisma.topic.count(),
     lessons: await prisma.lesson.count(),
+    questions: await prisma.question.count(),
     components: await prisma.lessonComponent.count(),
     simulations: await prisma.simulation.count(),
     validations: await prisma.contentValidation.count(),

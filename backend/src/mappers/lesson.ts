@@ -1,4 +1,5 @@
 import { Prisma, ParameterDataType, type Language } from '@prisma/client'
+import { mapQuizForStudent, quizInclude } from './quiz'
 
 /**
  * Maps database rows onto the LessonSpec shape the frontend renderers already
@@ -18,7 +19,7 @@ export const lessonDetailInclude = {
       visualization: true,
       simulation: { include: { parameters: true } },
       exercise: true,
-      quiz: true,
+      quiz: { include: quizInclude },
     },
   },
 } satisfies Prisma.LessonInclude
@@ -149,7 +150,14 @@ export function mapLesson(
 
       if (component.quiz) {
         base.rendererType = 'QUIZ_RUNNER'
-        base.config = { quizId: component.quiz.id }
+        // Questions travel with the lesson so the client needs no second
+        // round-trip. Routed through the same student-facing mapper as
+        // GET /api/quizzes/:id, so the answer key cannot leak by this path
+        // either.
+        base.config = {
+          ...mapQuizForStudent(component.quiz, language),
+          quizId: component.quiz.id,
+        }
         base.parameters = overrides
         return base
       }

@@ -14,12 +14,22 @@ interface Props {
   lesson: LessonSpec
   language?: Language
   onActivity?: (event: ActivityEvent) => void
+  /**
+   * Supplied by the page, because grading is not a rendering concern: the API
+   * does it in normal operation, and the offline dev harness fakes it. The
+   * QuizRunner itself knows about neither.
+   */
+  onQuizSubmit?: (
+    quizId: number,
+    responses: Record<string, string>,
+  ) => Promise<unknown>
 }
 
 export default function LessonRenderer({
   lesson,
   language = 'BN',
   onActivity,
+  onQuizSubmit,
 }: Props) {
   /**
    * Stamps each event with its curriculum location. A renderer reports what the
@@ -85,11 +95,24 @@ export default function LessonRenderer({
           )
         }
 
+        // A quiz needs a submit handler, which cannot travel through JSON
+        // config. It is injected here rather than fetched by the component so
+        // the renderer stays a pure function of its props.
+        const quizId = (component.config?.quizId as number | undefined) ?? undefined
+        const parameters =
+          component.rendererType === 'QUIZ_RUNNER' && quizId && onQuizSubmit
+            ? {
+                ...(component.parameters ?? {}),
+                onSubmit: (responses: Record<string, string>) =>
+                  onQuizSubmit(quizId, responses),
+              }
+            : (component.parameters ?? {})
+
         return (
           <section key={component.id} className="lesson__component">
             <Renderer
               config={component.config ?? {}}
-              parameters={component.parameters ?? {}}
+              parameters={parameters}
               language={language}
               onActivity={activityFor(component)}
             />

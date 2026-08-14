@@ -136,6 +136,71 @@ export async function postActivity(
   }
 }
 
+export interface QuizResultRow {
+  questionId: number
+  correct: boolean
+  marksAwarded: number
+  correctKeys: string[]
+  explanation?: string | null
+}
+
+export interface QuizResult {
+  score: number
+  maxScore: number
+  passMark?: number | null
+  results: QuizResultRow[]
+}
+
+function studentHeaders(): Record<string, string> {
+  const studentId = import.meta.env.VITE_STUDENT_ID
+  return {
+    'Content-Type': 'application/json',
+    ...(studentId ? { 'x-student-id': String(studentId) } : {}),
+  }
+}
+
+async function post<T>(path: string, body?: unknown): Promise<T> {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    headers: studentHeaders(),
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  if (!response.ok) {
+    let code = 'HTTP_ERROR'
+    let message = `Request failed with ${response.status}`
+    try {
+      const errorBody = (await response.json()) as ApiErrorBody
+      code = errorBody.error?.code ?? code
+      message = errorBody.error?.message ?? message
+    } catch {
+      // Non-JSON error body; keep the generic message.
+    }
+    throw new ApiError(response.status, code, message)
+  }
+  const envelope = (await response.json()) as ApiEnvelope<T>
+  return envelope.data
+}
+
+/**
+ * Starts an attempt and submits it.
+ *
+ * Two calls rather than one because the attempt row is what enforces the
+ * attempt limit and gives the submission something to belong to. Grading is
+ * entirely server-side — the client never sees an answer key until the result
+ * comes back.
+ */
+export async function submitQuiz(
+  quizId: number,
+  responses: Record<string, string>,
+  language: Language,
+): Promise<QuizResult> {
+  const attempt = await post<{ id: number }>(`/api/quizzes/${quizId}/attempts`)
+  return post<QuizResult>(
+    `/api/attempts/${attempt.id}/submit?lang=${language.toLowerCase()}`,
+    { responses },
+  )
+}
+
 export async function checkHealth(signal?: AbortSignal): Promise<boolean> {
   try {
     await get<{ status: string }>('/api/health', signal)

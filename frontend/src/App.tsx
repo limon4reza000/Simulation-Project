@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import LessonRenderer from './components/LessonRenderer'
 import { useLessonSource } from './lib/useLessonSource'
-import { postActivity } from './lib/api'
+import { postActivity, submitQuiz } from './lib/api'
+import { gradeLocally } from './data/chapter01Quiz'
 import { registeredTypes } from './registry/componentRegistry'
 import type { ActivityEvent, Language, LessonSpec } from './registry/types'
 import './styles.css'
@@ -67,6 +68,25 @@ export default function App() {
     [source, lessonId],
   )
 
+  const onQuizSubmit = useCallback(
+    async (quizId: number, responses: Record<string, string>) => {
+      if (source === 'api') {
+        return submitQuiz(quizId, responses, language)
+      }
+      // Offline harness only. The real key never reaches the browser.
+      const local = gradeLocally(responses)
+      return {
+        ...local,
+        results: local.results.map((row) => ({
+          ...row,
+          explanation:
+            language === 'BN' ? row.explanationBn : row.explanationEn,
+        })),
+      }
+    },
+    [source, language],
+  )
+
   return (
     <div className="app">
       <header className="app__header">
@@ -125,6 +145,7 @@ export default function App() {
             lesson={lesson}
             language={language}
             onActivity={onActivity}
+            onQuizSubmit={onQuizSubmit}
           />
         ) : (
           !error && <p>{language === 'BN' ? 'লোড হচ্ছে…' : 'Loading…'}</p>
