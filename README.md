@@ -13,8 +13,9 @@ NCTB curriculum content. First vertical slice: **Physics, Class 9–10, Chapter 
 | Instrument logic | Complete, 32 unit tests against printed worked examples |
 | Renderers | 4 built: vernier caliper, screw gauge, error propagation, log-scale explorer |
 | Component registry | Complete, 11 tests |
-| API layer | **Not started** — the frontend runs from inlined fixtures |
-| Auth, progress, quizzes | **Not started** |
+| API layer | Catalog + lesson + activity endpoints, 25 tests — **never run against a real database** |
+| Auth | **Not started** — a clearly-marked dev header shim stands in |
+| Progress, quizzes | **Not started** |
 
 Everything marked "not yet executed" is blocked only on a running MySQL
 instance, not on missing code.
@@ -75,7 +76,46 @@ constraints and silently ignores them**, which is worse than not having them.
 
 ```bash
 npm run db:seed
+npm run dev          # API on http://localhost:4000
+npm test             # 25 tests, no database required
 ```
+
+## API
+
+All responses are wrapped: `{ "data": ... }` on success, `{ "error": { code,
+message } }` on failure.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/health` | No database access — use it to check the process is up |
+| GET | `/api/classes` | Published classes with their published subjects |
+| GET | `/api/subjects/:id/chapters` | |
+| GET | `/api/chapters/:id/topics` | Topics with lesson summaries |
+| GET | `/api/lessons/:id?lang=bn\|en` | Returns the LessonSpec the renderers consume |
+| POST | `/api/simulations/:id/activity` | Requires an authenticated student |
+
+`GET /api/lessons/:id` is a drop-in replacement for
+`frontend/src/data/chapter01.ts` — same shape, so the renderers are unchanged.
+Every catalog query filters on published-and-not-deleted; there is deliberately
+no `?includeDrafts` flag, because that would be one forgotten guard away from
+showing unreviewed content to a child.
+
+### The auth shim — read this before deploying anything
+
+There is no real authentication yet. `POST /api/simulations/:id/activity`
+identifies the caller from an `x-student-id` header, which is **trivially
+spoofable** — any caller could write activity rows for any student.
+
+It is therefore **off by default** and only honoured when the API runs with
+`ALLOW_HEADER_IDENTITY=true`. With it off, the endpoint returns 401. The server
+logs a warning at startup when it is enabled. Delete `src/lib/auth.ts`'s header
+path the moment session auth lands.
+
+Data minimisation is enforced server-side, not left to callers: `activityType`
+must be `UPPER_SNAKE_CASE` (so free text cannot be smuggled into what is
+effectively an enum), and `metadata` accepts at most 10 keys of primitives with
+short strings — no nested objects. The users are children; "we only send what we
+need" is not a control if the server accepts anything.
 
 ## Design decisions worth knowing before you change anything
 
@@ -122,10 +162,22 @@ titles trace to a page.
 visually. Bulk content extraction will need OCR (Tesseract with `ben`
 traineddata), not text extraction. Budget for it.
 
+## Frontend data source
+
+The app reads from the API when it is reachable and falls back to the bundled
+fixtures when it is not, so the renderers stay workable without MySQL. **The
+active source is shown in the header.** A silent fallback would be worse than no
+fallback, because fixture data would be mistaken for live data.
+
+Set `VITE_API_URL` to point elsewhere, and `VITE_STUDENT_ID` to exercise the
+activity endpoint while the dev shim is enabled.
+
 ## Next
 
-1. Express API over the seeded schema, replacing `data/chapter01.ts`
-2. Auth + roles, then `TeacherAssignment`-scoped teacher views
+1. Run the migration and seed against a real MySQL instance — nothing in
+   `backend/prisma` has ever touched a live database
+2. Session auth + roles, then `TeacherAssignment`-scoped teacher views;
+   delete the `x-student-id` shim
 3. Quiz engine, seeded from the নমুনা প্রশ্ন MCQs on book pp. 29–31
 4. Progress aggregation from `LessonProgress` / `TopicProgress`
 5. Time how long instrument #3 takes and record it — that number is the

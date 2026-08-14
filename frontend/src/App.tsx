@@ -1,28 +1,71 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import LessonRenderer from './components/LessonRenderer'
-import { chapter01Lessons } from './data/chapter01'
+import { useLessonSource } from './lib/useLessonSource'
+import { postActivity } from './lib/api'
 import { registeredTypes } from './registry/componentRegistry'
-import type { ActivityEvent, Language } from './registry/types'
+import type { ActivityEvent, Language, LessonSpec } from './registry/types'
 import './styles.css'
 
 /**
- * Development harness for the Chapter 1 renderers.
+ * Student lesson view.
  *
- * This stands in for the student lesson route until the API exists. It also
- * surfaces the activity stream, so what would be POSTed to
- * /api/simulations/:id/activity is visible while building.
+ * Reads from the API when it is reachable and falls back to bundled fixtures
+ * when it is not, so the renderers stay workable without MySQL. The active
+ * source is shown in the header — a silent fallback would be worse than no
+ * fallback, because fixture data would be mistaken for live data.
  */
 export default function App() {
+  const { source, index, loadLesson } = useLessonSource()
+
   const [language, setLanguage] = useState<Language>('BN')
-  const [lessonId, setLessonId] = useState(chapter01Lessons[1].id)
+  const [lessonId, setLessonId] = useState<number | null>(null)
+  const [lesson, setLesson] = useState<LessonSpec | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [activity, setActivity] = useState<ActivityEvent[]>([])
 
-  const lesson =
-    chapter01Lessons.find((l) => l.id === lessonId) ?? chapter01Lessons[0]
+  // Pick an initial lesson once the catalog resolves.
+  useEffect(() => {
+    if (lessonId === null && index.length > 0) {
+      setLessonId(index[0].id)
+    }
+  }, [index, lessonId])
 
-  const onActivity = useCallback((event: ActivityEvent) => {
-    setActivity((current) => [event, ...current].slice(0, 8))
-  }, [])
+  useEffect(() => {
+    if (lessonId === null) return
+    const controller = new AbortController()
+
+    setError(null)
+    loadLesson(lessonId, language, controller.signal)
+      .then((next) => {
+        if (controller.signal.aborted) return
+        setLesson(next ?? null)
+        if (!next) setError('Lesson not found')
+      })
+      .catch((cause: unknown) => {
+        if (controller.signal.aborted) return
+        setError(cause instanceof Error ? cause.message : 'Could not load lesson')
+      })
+
+    return () => controller.abort()
+  }, [lessonId, language, loadLesson])
+
+  const onActivity = useCallback(
+    (event: ActivityEvent) => {
+      setActivity((current) => [event, ...current].slice(0, 8))
+
+      // Only report upstream when there is a real simulation behind it.
+      if (source !== 'api' || !event.simulationId) return
+      postActivity(event.simulationId, {
+        activityType: event.activityType,
+        lessonId: lessonId ?? undefined,
+        componentId: event.componentId,
+        metadata: event.metadata as Record<string, string | number | boolean>,
+      }).catch(() => {
+        // Losing an analytics event must never interrupt a lesson.
+      })
+    },
+    [source, lessonId],
+  )
 
   return (
     <div className="app">
@@ -38,6 +81,17 @@ export default function App() {
               ? 'ভৌত রাশি এবং তাদের পরিমাপ'
               : 'Physical Quantities and Their Measurement'}
           </h1>
+          <p className={`app__source is-${source}`}>
+            {source === 'loading'
+              ? '…'
+              : source === 'api'
+                ? language === 'BN'
+                  ? 'সার্ভার থেকে'
+                  : 'live from API'
+                : language === 'BN'
+                  ? 'নমুনা তথ্য (সার্ভার বন্ধ)'
+                  : 'fixture data (API offline)'}
+          </p>
         </div>
         <button
           type="button"
@@ -49,24 +103,29 @@ export default function App() {
       </header>
 
       <nav className="app__nav">
-        {chapter01Lessons.map((l) => (
+        {index.map((entry) => (
           <button
-            key={l.id}
+            key={entry.id}
             type="button"
-            className={l.id === lessonId ? 'is-active' : ''}
-            onClick={() => setLessonId(l.id)}
+            className={entry.id === lessonId ? 'is-active' : ''}
+            onClick={() => setLessonId(entry.id)}
           >
-            {language === 'BN' ? l.titleBn : l.titleEn}
+            {language === 'BN' ? entry.titleBn : entry.titleEn}
           </button>
         ))}
       </nav>
 
       <main className="app__main">
-        <LessonRenderer
-          lesson={lesson}
-          language={language}
-          onActivity={onActivity}
-        />
+        {error && <p className="app__error">{error}</p>}
+        {lesson ? (
+          <LessonRenderer
+            lesson={lesson}
+            language={language}
+            onActivity={onActivity}
+          />
+        ) : (
+          !error && <p>{language === 'BN' ? 'লোড হচ্ছে…' : 'Loading…'}</p>
+        )}
       </main>
 
       <footer className="app__footer">

@@ -29,6 +29,12 @@ export interface ActivityEvent {
   activityType: string
   metadata?: Record<string, unknown>
   occurredAt: string
+  /**
+   * Attached by LessonRenderer, not by the renderer itself — a component knows
+   * what the student did, but not where it sits in the curriculum.
+   */
+  componentId?: number
+  simulationId?: number
 }
 
 export interface RendererProps<
@@ -67,6 +73,8 @@ export interface LessonComponentSpec {
   bodyEn?: string
   /** Textbook page this component is validated against. */
   sourcePage?: number
+  /** Present for SIMULATION components — the target of the activity endpoint. */
+  simulationId?: number
 }
 
 export interface LessonSpec {

@@ -462,3 +462,24 @@ body {
     text-align: left;
   }
 }
+
+.app__source {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.app__source.is-api {
+  color: var(--ok);
+}
+
+.app__source.is-fixtures {
+  color: var(--match);
+}
+
+.app__error {
+  color: var(--bad);
+  border: 1px solid var(--bad);
+  border-radius: var(--radius);
+  padding: 12px;
+}

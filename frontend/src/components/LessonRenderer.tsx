@@ -21,8 +21,19 @@ export default function LessonRenderer({
   language = 'BN',
   onActivity,
 }: Props) {
-  const handleActivity = useCallback(
-    (event: ActivityEvent) => onActivity?.(event),
+  /**
+   * Stamps each event with its curriculum location. A renderer reports what the
+   * student did; only this layer knows which component and simulation that was,
+   * which keeps renderers free of any lesson awareness.
+   */
+  const activityFor = useCallback(
+    (component: { id: number; simulationId?: number }) =>
+      (event: ActivityEvent) =>
+        onActivity?.({
+          ...event,
+          componentId: component.id,
+          simulationId: component.simulationId,
+        }),
     [onActivity],
   )
 
@@ -80,7 +91,7 @@ export default function LessonRenderer({
               config={component.config ?? {}}
               parameters={component.parameters ?? {}}
               language={language}
-              onActivity={handleActivity}
+              onActivity={activityFor(component)}
             />
             {component.sourcePage !== undefined && (
               <cite className="lesson__source">
