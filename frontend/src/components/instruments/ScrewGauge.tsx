@@ -25,9 +25,18 @@ import type { RendererProps } from '../../registry/types'
 
 const VIEW_W = 900
 const VIEW_H = 320
-const SLEEVE_X = 250
+const ANVIL_X = 172
+const SLEEVE_X = 330
+const SLEEVE_W = 240
 const SLEEVE_Y = 150
-const PX_PER_MM = 26
+/**
+ * Scale of the measuring gap. The whole of MAX_MM must fit between the anvil
+ * and the sleeve, or the spindle between them collapses to a negative width:
+ *   ANVIL_X + MAX_MM * PX_PER_MM  <  SLEEVE_X
+ *   172     + 12     * 10         =  292  <  330  ✓
+ */
+const PX_PER_MM = 10
+const TICK_GAP = 18
 const DIAL_CX = 700
 const DIAL_CY = 150
 const DIAL_R = 96
@@ -185,15 +194,17 @@ export default function ScrewGauge({
 
         {/* spindle: gap between anvil and spindle face is the measured length */}
         <rect
-          x={172 + length * PX_PER_MM}
+          x={ANVIL_X + length * PX_PER_MM}
           y={138}
-          width={SLEEVE_X - (172 + length * PX_PER_MM)}
+          // Clamped as well as scaled: SVG rejects a negative width outright,
+          // so a geometry slip would blank the spindle rather than misdraw it.
+          width={Math.max(0, SLEEVE_X - (ANVIL_X + length * PX_PER_MM))}
           height={24}
           className="sim__spindle"
         />
         {length > 0 && (
           <rect
-            x={172}
+            x={ANVIL_X}
             y={132}
             width={length * PX_PER_MM}
             height={36}
@@ -206,7 +217,7 @@ export default function ScrewGauge({
         <rect
           x={SLEEVE_X}
           y={SLEEVE_Y - 22}
-          width={300}
+          width={SLEEVE_W}
           height={44}
           className="sim__beam"
           rx={4}
@@ -214,22 +225,22 @@ export default function ScrewGauge({
         <line
           x1={SLEEVE_X}
           y1={SLEEVE_Y}
-          x2={SLEEVE_X + 300}
+          x2={SLEEVE_X + SLEEVE_W}
           y2={SLEEVE_Y}
           className="sim__datum"
         />
         {Array.from({ length: maxMm + 1 }, (_, mm) => (
           <g key={`lin${mm}`}>
             <line
-              x1={SLEEVE_X + 10 + mm * 22}
+              x1={SLEEVE_X + 10 + mm * TICK_GAP}
               y1={SLEEVE_Y}
-              x2={SLEEVE_X + 10 + mm * 22}
+              x2={SLEEVE_X + 10 + mm * TICK_GAP}
               y2={SLEEVE_Y - (mm % 5 === 0 ? 16 : 9)}
               className={`sim__tick ${mm <= result.linearScale ? 'is-passed' : ''}`}
             />
             {mm % 5 === 0 && (
               <text
-                x={SLEEVE_X + 10 + mm * 22}
+                x={SLEEVE_X + 10 + mm * TICK_GAP}
                 y={SLEEVE_Y - 22}
                 className="sim__tickLabel"
                 textAnchor="middle"

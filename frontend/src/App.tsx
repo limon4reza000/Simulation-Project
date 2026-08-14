@@ -88,9 +88,12 @@ export default function App() {
                 ? language === 'BN'
                   ? 'সার্ভার থেকে'
                   : 'live from API'
-                : language === 'BN'
-                  ? 'নমুনা তথ্য (সার্ভার বন্ধ)'
-                  : 'fixture data (API offline)'}
+                : // Do not claim the server is down: the fallback also fires
+                  // when the API is up but the catalog is empty (unseeded
+                  // database), which is the common case in development.
+                  language === 'BN'
+                  ? 'নমুনা তথ্য'
+                  : 'fixture data'}
           </p>
         </div>
         <button

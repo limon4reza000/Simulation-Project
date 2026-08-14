@@ -230,8 +230,11 @@ export default function LogScaleExplorer({
         {/* the objects from টেবিল ১.০২ */}
         {track.items.map((item, i) => {
           const x = toX(Math.log10(item.value))
+          // Alternate above and below so neighbouring labels never collide.
+          // The lower row clears the decade labels (y = 180) rather than
+          // sitting on them.
           const above = i % 2 === 0
-          const y = above ? 118 : 182
+          const y = above ? 118 : 208
           const isNearest = item === nearest
           return (
             <g key={item.labelEn} className={isNearest ? 'is-match' : ''}>
@@ -250,7 +253,7 @@ export default function LogScaleExplorer({
               />
               <text
                 x={x}
-                y={above ? y : y + 4}
+                y={y}
                 className={`sim__itemLabel ${isNearest ? 'is-match' : ''}`}
                 textAnchor="middle"
               >

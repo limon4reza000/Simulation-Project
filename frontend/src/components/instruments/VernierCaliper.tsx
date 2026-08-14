@@ -195,7 +195,9 @@ export default function VernierCaliper({
           </g>
         ))}
 
-        <text x={26} y={BEAM_TOP - 8} className="sim__axisLabel">
+        {/* Above the jaws, not just above the beam — the object being measured
+            occupies the band between them and would sit on top of the label. */}
+        <text x={26} y={JAW_TOP - 12} className="sim__axisLabel">
           {t('mainScale')} (cm)
         </text>
 

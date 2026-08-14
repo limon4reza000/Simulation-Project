@@ -94,6 +94,31 @@ describe('LessonRenderer', () => {
     }
   })
 
+  it('never emits a negative SVG width at any measurable length', () => {
+    // Regression: the screw gauge's spindle is drawn between the anvil and the
+    // sleeve, and its width was computed from constants that could not fit the
+    // full 12 mm range. Past ~3 mm the width went negative, SVG rejected the
+    // rect, and the spindle silently vanished. Browsers report this only as a
+    // console error, so nothing in the suite caught it — this does.
+    for (const objectLength of [0, 0.5, 2.53, 6, 9.99, 12]) {
+      const { container, unmount } = render(
+        <componentRegistry.SIM_SCREW_GAUGE
+          config={{ maxLengthMm: 12 }}
+          parameters={{ pitch: 1, circularDivisions: 100, objectLength }}
+          language="BN"
+        />,
+      )
+      for (const rect of Array.from(container.querySelectorAll('rect'))) {
+        const width = Number(rect.getAttribute('width'))
+        expect(
+          width >= 0,
+          `negative rect width ${width} at objectLength=${objectLength}`,
+        ).toBe(true)
+      }
+      unmount()
+    }
+  })
+
   it('renders every registered type without throwing', () => {
     // Cheap smoke test over the whole registry: a renderer that crashes on
     // empty config would otherwise only surface in front of a student.
