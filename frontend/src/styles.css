@@ -24,8 +24,15 @@
   --bad: #b3261e;
   --radius: 10px;
 
-  --font-bn: 'Noto Sans Bengali', 'Nirmala UI', 'SolaimanLipi', 'Kalpurush',
-    system-ui, sans-serif;
+  /*
+   * Latin first, Bangla behind it. Font fallback is per glyph, so Latin text
+   * resolves to the system sans while Bangla — absent from it — falls through
+   * to the Bangla faces. Leading with the Bangla fonts made English render in
+   * Nirmala UI, which reads noticeably heavier and rounder than intended.
+   * Still no webfont: everything here ships with the OS.
+   */
+  --font-bn: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Bengali',
+    'Nirmala UI', 'SolaimanLipi', 'Kalpurush', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {

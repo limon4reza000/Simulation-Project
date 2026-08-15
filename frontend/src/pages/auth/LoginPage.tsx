@@ -51,7 +51,6 @@ const FORM = {
   submit: { bn: 'লগ ইন', en: 'Log In' },
   working: { bn: 'অপেক্ষা করো…', en: 'Signing in…' },
   offline: { bn: 'সার্ভারে পৌঁছানো যাচ্ছে না।', en: 'Could not reach the server.' },
-  remember: { bn: 'আমাকে মনে রেখো', en: 'Remember me' },
   forgot: { bn: 'পাসওয়ার্ড ভুলে গেছ?', en: 'Forgot Password' },
   forgotHelp: {
     bn: 'পাসওয়ার্ড রিসেট এখনো চালু হয়নি। তোমার শিক্ষক বা প্রশাসকের সাথে যোগাযোগ করো।',
@@ -77,7 +76,6 @@ export default function LoginPage({ variant, language = 'BN' }: Props) {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [forgotNotice, setForgotNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -88,7 +86,7 @@ export default function LoginPage({ variant, language = 'BN' }: Props) {
       setBusy(true)
       setError(null)
       try {
-        const user = await login(email, password, rememberMe)
+        const user = await login(email, password)
         setUser(user)
         // The role decides the destination, not the page they used.
         navigate(location.state?.from ?? homeRouteFor(user), { replace: true })
@@ -100,7 +98,7 @@ export default function LoginPage({ variant, language = 'BN' }: Props) {
         setBusy(false)
       }
     },
-    [email, password, rememberMe, setUser, navigate, location.state],
+    [email, password, setUser, navigate, location.state],
   )
 
   return (
@@ -116,7 +114,9 @@ export default function LoginPage({ variant, language = 'BN' }: Props) {
           {c(copy.prompt)}{' '}
           <AuthLink to={copy.registerTo}>{c(copy.registerLabel)}</AuthLink>
           <br />
-          <AuthLink to={copy.otherTo}>{c(copy.otherLabel)}</AuthLink>
+          <AuthLink to={copy.otherTo} variant="cross-role">
+            {c(copy.otherLabel)}
+          </AuthLink>
         </>
       }
     >
@@ -140,21 +140,12 @@ export default function LoginPage({ variant, language = 'BN' }: Props) {
           onChange={setPassword}
         />
 
-        <div className="auth__row">
-          {/* Backed by a real, longer session lifetime — not decoration. */}
-          <label className="auth__remember">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-            />
-            <span>{t('remember')}</span>
-          </label>
-
-          {/*
-            No reset flow exists. Rather than a link to nowhere, this states
-            what someone locked out can actually do today.
-          */}
+        {/*
+          Right-aligned under the password field, as in the reference. No reset
+          flow exists, so rather than a link to nowhere this states what someone
+          locked out can actually do today.
+        */}
+        <div className="auth__forgotRow">
           <button
             type="button"
             className="auth__forgot"

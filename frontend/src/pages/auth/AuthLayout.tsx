@@ -192,7 +192,12 @@ export function PasswordField({
           <EyeIcon className="auth__revealIcon" />
         )}
       </button>
-      {hint && <span className="auth__hint">{hint}</span>}
+      {/*
+        Shown once typing starts rather than always. A permanently visible hint
+        put a gap between two fields that the rest of the form does not have,
+        and the rule only becomes useful when there is a password to measure.
+      */}
+      {hint && value.length > 0 && <span className="auth__hint">{hint}</span>}
     </div>
   )
 }
@@ -279,9 +284,21 @@ function AuthLegal({ language }: { language: Language }) {
   )
 }
 
-export function AuthLink({ to, children }: { to: string; children: ReactNode }) {
+export function AuthLink({
+  to,
+  children,
+  variant = 'primary',
+}: {
+  to: string
+  children: ReactNode
+  /** `cross-role` is the quieter student/teacher switch. */
+  variant?: 'primary' | 'cross-role'
+}) {
   return (
-    <Link className="auth__link" to={to}>
+    <Link
+      className={`auth__link ${variant === 'cross-role' ? 'auth__crossRole' : ''}`}
+      to={to}
+    >
       {children}
     </Link>
   )

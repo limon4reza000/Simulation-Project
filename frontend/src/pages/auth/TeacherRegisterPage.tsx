@@ -30,10 +30,6 @@ const T = {
   working: { bn: 'তৈরি হচ্ছে…', en: 'Creating…' },
   mismatch: { bn: 'দুটি পাসওয়ার্ড মিলছে না', en: 'Passwords do not match' },
   offline: { bn: 'সার্ভারে পৌঁছানো যাচ্ছে না।', en: 'Could not reach the server.' },
-  assignmentNote: {
-    bn: 'আপনার ক্লাস প্রশাসক নির্ধারণ করবেন।',
-    en: 'An administrator assigns your classes after registration.',
-  },
   haveAccount: { bn: 'সাইন ইন', en: 'Sign In' },
   student: { bn: 'আপনি কি শিক্ষার্থী?', en: 'Are you a student?' },
 } as const
@@ -93,7 +89,9 @@ export default function TeacherRegisterPage({
           {language === 'BN' ? 'অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
           <AuthLink to="/login/teacher">{t('haveAccount')}</AuthLink>
           <br />
-          <AuthLink to="/register/student">{t('student')}</AuthLink>
+          <AuthLink to="/register/student" variant="cross-role">
+            {t('student')}
+          </AuthLink>
         </>
       }
     >
@@ -110,11 +108,7 @@ export default function TeacherRegisterPage({
           />
         </Field>
 
-        <Field
-          label={t('institution')}
-          icon={<BuildingIcon />}
-          hint={t('assignmentNote')}
-        >
+        <Field label={t('institution')} icon={<BuildingIcon />}>
           <input
             type="text"
             value={institution}

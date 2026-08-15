@@ -25,7 +25,7 @@ const T = {
   subtitle: { bn: 'অ্যাকাউন্ট তৈরি করে শেখা শুরু করো', en: 'Create an account to start learning' },
   name: { bn: 'পুরো নাম', en: 'Full name' },
   classLabel: { bn: 'শ্রেণি', en: 'Class' },
-  classPlaceholder: { bn: 'তোমার শ্রেণি বেছে নাও', en: 'Choose your class' },
+  classPlaceholder: { bn: 'শ্রেণি বেছে নাও', en: 'Select Class' },
   email: { bn: 'ইমেইল', en: 'Email Address' },
   password: { bn: 'পাসওয়ার্ড', en: 'Password' },
   confirm: { bn: 'পাসওয়ার্ড আবার লিখো', en: 'Confirm password' },
@@ -106,7 +106,9 @@ export default function StudentRegisterPage({
           {language === 'BN' ? 'অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
           <AuthLink to="/login/student">{t('haveAccount')}</AuthLink>
           <br />
-          <AuthLink to="/register/teacher">{t('teacher')}</AuthLink>
+          <AuthLink to="/register/teacher" variant="cross-role">
+            {t('teacher')}
+          </AuthLink>
         </>
       }
     >
