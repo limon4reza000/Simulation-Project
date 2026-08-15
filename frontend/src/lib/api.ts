@@ -126,8 +126,8 @@ export interface CurrentUser {
   isStudent: boolean
 }
 
-export function login(email: string, password: string) {
-  return post<CurrentUser>('/api/auth/login', { email, password })
+export function login(email: string, password: string, rememberMe = false) {
+  return post<CurrentUser>('/api/auth/login', { email, password, rememberMe })
 }
 
 export function logout() {
@@ -204,6 +204,58 @@ export async function submitQuiz(
     `/api/attempts/${attempt.id}/submit?lang=${language.toLowerCase()}`,
     { responses },
   )
+}
+
+export interface EnrollableClass {
+  id: number
+  level: number
+  nameBn: string
+  nameEn: string
+}
+
+export function fetchEnrollableClasses(signal?: AbortSignal) {
+  return get<EnrollableClass[]>('/api/auth/enrollable-classes', signal)
+}
+
+export function registerStudent(input: {
+  name: string
+  email: string
+  password: string
+  classLevel: number
+}) {
+  return post<CurrentUser & { classLevel: number }>(
+    '/api/auth/register/student',
+    input,
+  )
+}
+
+export function registerTeacher(input: {
+  name: string
+  email: string
+  password: string
+  institution?: string
+}) {
+  return post<CurrentUser>('/api/auth/register/teacher', input)
+}
+
+export interface TeacherOverview {
+  name: string
+  employeeCode: string | null
+  institution: string | null
+  totalStudents: number
+  assignments: {
+    classId: number
+    classLevel: number
+    classNameBn: string
+    classNameEn: string
+    subjectNameBn: string | null
+    subjectNameEn: string | null
+    studentCount: number
+  }[]
+}
+
+export function fetchTeacherOverview(signal?: AbortSignal) {
+  return get<TeacherOverview>('/api/teacher/overview', signal)
 }
 
 export interface TopicProgress {

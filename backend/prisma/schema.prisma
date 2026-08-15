@@ -166,6 +166,13 @@ model Student {
 model Teacher {
   userId       Int      @id @map("user_id")
   employeeCode String   @unique @map("employee_code") @db.VarChar(32)
+  /// School or college, as typed at registration. Optional because a teacher
+  /// may register before an administrator confirms their posting.
+  ///
+  /// Note what is deliberately NOT here: the subject they teach. That is
+  /// TeacherAssignment's job, which models it per class, and duplicating it
+  /// here would create a second source of truth that could disagree.
+  institution  String?  @map("institution") @db.VarChar(180)
   createdAt    DateTime @default(now()) @map("created_at")
 
   user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -4,38 +4,38 @@ import { useLessonSource } from './lib/useLessonSource'
 import {
   postActivity,
   submitQuiz,
-  fetchMe,
-  logout,
   fetchChapterProgress,
   recordLessonProgress,
-  type CurrentUser,
   type ChapterProgress,
 } from './lib/api'
 import ProgressPanel from './components/progress/ProgressPanel'
-import SignIn from './components/auth/SignIn'
+import { useAuth } from './auth/AuthContext'
 import { gradeLocally } from './data/chapter01Quiz'
 import { registeredTypes } from './registry/componentRegistry'
 import type { ActivityEvent, Language, LessonSpec } from './registry/types'
 import './styles.css'
 
 /**
- * Student lesson view.
+ * Student dashboard.
  *
  * Reads from the API when it is reachable and falls back to bundled fixtures
  * when it is not, so the renderers stay workable without MySQL. The active
  * source is shown in the header — a silent fallback would be worse than no
  * fallback, because fixture data would be mistaken for live data.
  */
-export default function App() {
-  const { source, index, chapterId, loadLesson } = useLessonSource()
+interface Props {
+  language: Language
+  onLanguageChange: (language: Language) => void
+}
 
-  const [language, setLanguage] = useState<Language>('BN')
+export default function StudentDashboard({ language, onLanguageChange }: Props) {
+  const { source, index, chapterId, loadLesson } = useLessonSource()
+  // Session state is owned by AuthProvider; this page only reads it.
+  const { user, signOut } = useAuth()
   const [lessonId, setLessonId] = useState<number | null>(null)
   const [lesson, setLesson] = useState<LessonSpec | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activity, setActivity] = useState<ActivityEvent[]>([])
-  const [user, setUser] = useState<CurrentUser | null>(null)
-  const [authChecked, setAuthChecked] = useState(false)
   const [progress, setProgress] = useState<ChapterProgress | null>(null)
 
   const refreshProgress = useCallback(async () => {
@@ -55,23 +55,6 @@ export default function App() {
   useEffect(() => {
     void refreshProgress()
   }, [refreshProgress])
-
-  // Resolve the session once on load. The cookie is httpOnly, so the only way
-  // to know whether we are signed in is to ask the server.
-  useEffect(() => {
-    const controller = new AbortController()
-    fetchMe(controller.signal)
-      .then((me) => setUser(me))
-      .catch(() => setUser(null))
-      .finally(() => setAuthChecked(true))
-    return () => controller.abort()
-  }, [])
-
-  const onSignOut = useCallback(async () => {
-    await logout().catch(() => {})
-    setUser(null)
-    setActivity([])
-  }, [])
 
   // Pick an initial lesson once the catalog resolves.
   useEffect(() => {
@@ -182,7 +165,7 @@ export default function App() {
           {user && (
             <>
               <span className="app__user">{user.name}</span>
-              <button type="button" className="app__lang" onClick={onSignOut}>
+              <button type="button" className="app__lang" onClick={() => void signOut()}>
                 {language === 'BN' ? 'সাইন আউট' : 'Sign out'}
               </button>
             </>
@@ -190,7 +173,7 @@ export default function App() {
           <button
             type="button"
             className="app__lang"
-            onClick={() => setLanguage((l) => (l === 'BN' ? 'EN' : 'BN'))}
+            onClick={() => onLanguageChange(language === 'BN' ? 'EN' : 'BN')}
           >
             {language === 'BN' ? 'English' : 'বাংলা'}
           </button>
@@ -211,9 +194,6 @@ export default function App() {
       </nav>
 
       <main className="app__main">
-        {source === 'api' && authChecked && !user && (
-          <SignIn language={language} onSignedIn={setUser} />
-        )}
         {error && <p className="app__error">{error}</p>}
         {progress && (
           <ProgressPanel

@@ -149,6 +149,28 @@ describe('POST /api/auth/login', () => {
     expect(stored).not.toBe(token)
   })
 
+  it('remember me extends the session, and is off by default', async () => {
+    const plain = await request(app())
+      .post('/api/auth/login')
+      .send({ email: 'student@example.local', password: PASSWORD })
+    const plainExpiry = stub.session.create.mock.calls[0][0].data.expiresAt as Date
+
+    stub = createStub()
+    const remembered = await request(app())
+      .post('/api/auth/login')
+      .send({ email: 'student@example.local', password: PASSWORD, rememberMe: true })
+    const longExpiry = stub.session.create.mock.calls[0][0].data.expiresAt as Date
+
+    expect(plain.status).toBe(200)
+    expect(remembered.status).toBe(200)
+    // Default is the short lifetime; opting in is meaningfully longer but still
+    // bounded — a session that never expires cannot be revoked by time.
+    expect(longExpiry.getTime()).toBeGreaterThan(plainExpiry.getTime())
+    const days = (longExpiry.getTime() - Date.now()) / 86_400_000
+    expect(days).toBeGreaterThan(25)
+    expect(days).toBeLessThan(35)
+  })
+
   it('rejects a wrong password', async () => {
     const res = await request(app())
       .post('/api/auth/login')

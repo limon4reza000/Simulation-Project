@@ -87,20 +87,33 @@ async function main() {
   // The book is a combined Class 9–10 volume, so one Physics subject is linked
   // to both classes and the chapters hang off the subject. The ClassSubject
   // junction is doing real work here, not just modelling ceremony.
+  // Classes 6–10 are enrollable at registration. Only 9–10 currently carry
+  // Physics content; the rest exist so a student can register against the class
+  // they are actually in rather than being forced into one that has lessons.
+  const CLASS_NAMES_BN: Record<number, string> = {
+    6: 'ষষ্ঠ',
+    7: 'সপ্তম',
+    8: 'অষ্টম',
+    9: 'নবম',
+    10: 'দশম',
+  }
+
   const classes = await Promise.all(
-    [9, 10].map((level) =>
+    [6, 7, 8, 9, 10].map((level) =>
       prisma.class.upsert({
         where: { level },
         update: {},
         create: {
           level,
-          nameBn: `${level === 9 ? 'নবম' : 'দশম'} শ্রেণি`,
+          nameBn: `${CLASS_NAMES_BN[level]} শ্রেণি`,
           nameEn: `Class ${level}`,
           status: ContentStatus.PUBLISHED,
         },
       }),
     ),
   )
+  // Physics is a 9–10 volume, so subject links stay on those two classes only.
+  const physicsClasses = classes.filter((c) => c.level >= 9)
 
   // A demo student, so the activity endpoint can be exercised end to end in
   // development. Remove before any real deployment.
@@ -123,7 +136,7 @@ async function main() {
     update: {},
     create: {
       userId: studentUser.id,
-      classId: classes[0].id,
+      classId: physicsClasses[0].id,
       studentCode: 'DEMO-0001',
     },
   })
@@ -142,7 +155,7 @@ async function main() {
     },
   })
 
-  for (const cls of classes) {
+  for (const cls of physicsClasses) {
     await prisma.classSubject.upsert({
       where: { classId_subjectId: { classId: cls.id, subjectId: physics.id } },
       update: {},
@@ -167,7 +180,7 @@ async function main() {
 
   const textbook = await prisma.textbook.create({
     data: {
-      classId: classes[0].id,
+      classId: physicsClasses[0].id,
       subjectId: physics.id,
       title: 'মাধ্যমিক পদার্থবিজ্ঞান, শ্রেণি ৯–১০',
       edition: '2026',

@@ -11,6 +11,7 @@ import {
   SESSION_COOKIE,
 } from '../lib/session'
 import { requireUser } from '../lib/auth'
+import { RateLimiter } from '../lib/rateLimit'
 
 /**
  * Session authentication.
@@ -22,44 +23,19 @@ import { requireUser } from '../lib/auth'
 const loginSchema = z.object({
   email: z.string().email().max(190),
   password: z.string().min(1).max(200),
+  /** Extends the session lifetime. Defaults to off — the shorter, safer one. */
+  rememberMe: z.boolean().optional(),
 })
 
 /**
- * Fixed-window brute-force limiter, in memory.
- *
- * Enough to make online password guessing impractical on a single-process
- * deployment. It resets on restart and is per-process, so a multi-instance
- * deployment needs this moved to Redis or the database — noted rather than
- * pretended otherwise.
+ * Brute-force limiter for login. Shared implementation with registration; see
+ * lib/rateLimit.ts for the multi-instance caveat.
  */
-const MAX_ATTEMPTS = 8
-const WINDOW_MS = 10 * 60 * 1000
-const attempts = new Map<string, { count: number; resetAt: number }>()
+const loginLimiter = new RateLimiter({ max: 8, windowMs: 10 * 60 * 1000 })
 
-function tooManyAttempts(key: string): boolean {
-  const now = Date.now()
-  const entry = attempts.get(key)
-  if (!entry || entry.resetAt < now) return false
-  return entry.count >= MAX_ATTEMPTS
-}
-
-function recordFailure(key: string): void {
-  const now = Date.now()
-  const entry = attempts.get(key)
-  if (!entry || entry.resetAt < now) {
-    attempts.set(key, { count: 1, resetAt: now + WINDOW_MS })
-  } else {
-    entry.count += 1
-  }
-  // Opportunistic cleanup; this map must not grow without bound.
-  if (attempts.size > 5000) {
-    for (const [k, v] of attempts) if (v.resetAt < now) attempts.delete(k)
-  }
-}
-
-function clearFailures(key: string): void {
-  attempts.delete(key)
-}
+const tooManyAttempts = (key: string) => loginLimiter.isBlocked(key)
+const recordFailure = (key: string) => loginLimiter.recordFailure(key)
+const clearFailures = (key: string) => loginLimiter.clear(key)
 
 export function createAuthRouter(prisma: PrismaClient): Router {
   const router = Router()
@@ -71,7 +47,7 @@ export function createAuthRouter(prisma: PrismaClient): Router {
       if (!parsed.success) {
         throw HttpError.badRequest('Email and password are required')
       }
-      const { email, password } = parsed.data
+      const { email, password, rememberMe } = parsed.data
       const key = `${req.ip ?? 'unknown'}:${email.toLowerCase()}`
 
       if (tooManyAttempts(key)) {
@@ -114,6 +90,7 @@ export function createAuthRouter(prisma: PrismaClient): Router {
         prisma,
         user.id,
         req.get('user-agent') ?? undefined,
+        rememberMe === true,
       )
       res.cookie(SESSION_COOKIE, token, sessionCookieOptions(expiresAt))
 

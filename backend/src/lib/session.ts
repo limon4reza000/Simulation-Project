@@ -19,6 +19,15 @@ export const SESSION_COOKIE = 'ilsp_session'
 /** Long enough for a school day plus a commute; short enough to limit theft. */
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000
 
+/**
+ * "Remember me" lifetime.
+ *
+ * Longer, but still bounded — a session that never expires is a credential
+ * with no revocation date. Thirty days means a shared or lost device stops
+ * being a way in within a month even if nobody thinks to sign out.
+ */
+const REMEMBERED_TTL_MS = 30 * 24 * 60 * 60 * 1000
+
 /** Refresh lastSeenAt at most this often, to avoid a write per request. */
 const TOUCH_INTERVAL_MS = 5 * 60 * 1000
 
@@ -42,9 +51,12 @@ export async function createSession(
   prisma: PrismaClient,
   userId: number,
   userAgent?: string,
+  remember = false,
 ): Promise<{ token: string; expiresAt: Date }> {
   const token = generateToken()
-  const expiresAt = new Date(Date.now() + SESSION_TTL_MS)
+  const expiresAt = new Date(
+    Date.now() + (remember ? REMEMBERED_TTL_MS : SESSION_TTL_MS),
+  )
 
   await prisma.session.create({
     data: {

@@ -14,7 +14,7 @@ NCTB curriculum content. First vertical slice: **Physics, Class 9–10, Chapter 
 | Renderers | 4 built: vernier caliper, screw gauge, error propagation, log-scale explorer |
 | Component registry | Complete, 11 tests |
 | API layer | Catalog, lesson, activity and quiz endpoints; 58 tests plus a 31-check live-database flow |
-| Auth | Session cookies with scrypt passwords; the header shim is gone |
+| Auth | Separate student/teacher login and registration; session cookies, scrypt passwords |
 | Quizzes | Server-graded, verified live; 5 of the 6 printed MCQs seeded |
 | Progress aggregation | Derived from lessons and quiz scores; 18 unit + 25 live-database checks |
 
@@ -109,6 +109,10 @@ message } }` on failure.
 | POST | `/api/auth/logout` | Revokes this session |
 | POST | `/api/auth/logout-all` | Revokes every session for the user |
 | GET | `/api/auth/me` | Current user, or 401 |
+| GET | `/api/auth/enrollable-classes` | Classes 6–10, for the registration form |
+| POST | `/api/auth/register/student` | Always creates a STUDENT; class required |
+| POST | `/api/auth/register/teacher` | Always creates a TEACHER |
+| GET | `/api/teacher/overview` | TEACHER only; scoped by TeacherAssignment |
 | POST | `/api/lessons/:id/progress` | Records the caller's own lesson progress |
 | GET | `/api/chapters/:id/progress` | The caller's own progress, with weak topics |
 
@@ -117,6 +121,36 @@ message } }` on failure.
 Every catalog query filters on published-and-not-deleted; there is deliberately
 no `?includeDrafts` flag, because that would be one forgotten guard away from
 showing unreviewed content to a child.
+
+### Roles
+
+Students and teachers have separate login and registration pages, at
+`/login/student`, `/register/student`, `/login/teacher` and `/register/teacher`,
+and separate dashboards at `/learn` and `/teacher`.
+
+**The role is decided by the endpoint, never by the request.** There are two
+registration endpoints rather than one with a `role` field, and each hardcodes
+its role as a constant. A body containing `"role": "ADMIN"` is ignored — there
+is a test for exactly that, and it was checked against the live server too.
+
+Student registration requires a class (6–10). It is validated server-side
+against published `Class` rows, so a number in range that names a withdrawn
+class is still rejected. The dropdown is populated from the API rather than
+hard-coded, so the options cannot drift from what exists.
+
+Route guards in the client are convenience only. Every endpoint re-checks the
+role, so a tampered client reaches 403s rather than data:
+
+- a student calling `/api/teacher/overview` gets 403 `FORBIDDEN`
+- a teacher calling a student progress route gets 403 `NOT_A_STUDENT`
+
+A teacher who signs in through the *student* login page still lands on the
+teacher dashboard: there is one login endpoint, and the server's answer decides
+the destination. Trusting the page to say who someone is would defeat the point.
+
+Teachers see only classes assigned to them through `TeacherAssignment`. A newly
+registered teacher therefore sees none — which is the honest answer, not "all
+students".
 
 ### Authentication
 
@@ -140,8 +174,15 @@ Session cookies, not tokens in localStorage.
 - A wrong password and an unknown email return the same status, code and
   message, and unknown emails still burn comparable CPU — otherwise response
   latency alone reveals which addresses are registered.
-- Login failures are rate limited per IP + email. The limiter is in-process, so
-  a multi-instance deployment must move it to Redis or the database.
+- Login failures and registrations are rate limited per IP + email. The limiter
+  is in-process, so a multi-instance deployment must move it to Redis or the
+  database.
+- "Remember me" is a real setting, not decoration: it extends the session from
+  12 hours to 30 days. Still bounded — a session that never expires is a
+  credential that cannot be revoked by time.
+
+There is deliberately **no "Forgot password?" link**. No reset flow exists yet,
+and a link that goes nowhere is worse than its absence.
 
 Because the cookie is cross-origin in development, CORS runs with
 `credentials: true` and an explicit origin allowlist — a wildcard origin cannot
@@ -250,7 +291,11 @@ a deployed environment.
    one API instance
 2. Give the seed natural unique keys so content can be upserted rather than
    skipped — see the note below
-2. `TeacherAssignment`-scoped teacher views and role-gated authoring routes
+2. Password reset, so the login page can offer "Forgot password?"
+3. Phone as an alternative login identifier — the current design is email-only,
+   and adding phone means a second unique column and a second login path
+4. Admin screens for creating `TeacherAssignment` rows, so teacher dashboards
+   show real classes
 3. Quiz engine, seeded from the নমুনা প্রশ্ন MCQs on book pp. 29–31
 4. Progress aggregation from `LessonProgress` / `TopicProgress`
 5. Time how long instrument #3 takes and record it — that number is the
