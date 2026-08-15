@@ -2,18 +2,19 @@
 
 An interactive learning platform for Bangladeshi secondary students, built on
 NCTB curriculum content. First vertical slice: **Physics, Class 9–10**,
-Chapters 1–4 (complete) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি.
+Chapters 1–5 (complete) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি,
+পদার্থের অবস্থা ও চাপ.
 
 ## Status
 
-392 tests passing (137 backend, 255 frontend), plus live-database and
+440 tests passing (137 backend, 303 frontend), plus live-database and
 browser-driven verification for every renderer.
 
 | Area | State |
 |---|---|
 | Database schema | Migrated and verified against MySQL 8.4.9; all CHECK constraints proven to enforce |
-| Seed | Chapters 1–4, each idempotent and independently re-runnable |
-| Renderers | 17 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency — each with pure-logic tests checked against the book's own equations or printed figures |
+| Seed | Chapters 1–5, each idempotent and independently re-runnable |
+| Renderers | 21 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency, pressure, liquid pressure, Archimedes/buoyancy, Hooke's law — each with pure-logic tests checked against the book's own equations or printed figures |
 | Component registry | The architectural core: adding an artefact is one component + one registry line |
 | API layer | Catalog, lesson, activity, quiz, progress, auth, registration, teacher-roster and admin-assignment endpoints |
 | Auth | Separate student/teacher login and registration; session cookies, scrypt passwords, role enforced server-side |
@@ -38,6 +39,7 @@ backend/
     seedChapter2.ts            additive, per-lesson idempotent — see its header
     seedChapter3.ts            same pattern, for Chapter 3
     seedChapter4.ts            same pattern, for Chapter 4
+    seedChapter5.ts            same pattern, for Chapter 5
 frontend/
   src/
     lib/instruments/           Chapter 1 instrument logic — no React, fully tested
@@ -48,6 +50,8 @@ frontend/
                                 second law, friction incline, force balance
     lib/energy/                 Chapter 4 energy logic — work, kinetic/potential
                                 energy conversion, pendulum energy, power/efficiency
+    lib/pressure/                Chapter 5 pressure/matter logic — pressure,
+                                liquid pressure, Archimedes/buoyancy, Hooke's law
     components/instruments/    VernierCaliper, ScrewGauge (SVG)
     components/measurement/    ErrorPropagationLab
     components/viz/            LogScaleExplorer
@@ -57,6 +61,7 @@ frontend/
                                 ForceBalance
     components/energy/         Work, EnergyConversion, PendulumEnergy,
                                 PowerEfficiency
+    components/pressure/       Pressure, LiquidPressure, Archimedes, HookesLaw
     registry/                  the component registry — the load-bearing abstraction
     data/chapter01.ts          fixtures standing in for the API
 docs/
@@ -65,6 +70,7 @@ docs/
   content/physics-9-10-chapter-02.md same, for Chapter 2
   content/physics-9-10-chapter-03.md same, for Chapter 3
   content/physics-9-10-chapter-04.md same, for Chapter 4
+  content/physics-9-10-chapter-05.md same, for Chapter 5
   content/textbook-issues.md         printing defects found in the source book
 ```
 
@@ -76,7 +82,7 @@ docs/
 cd frontend
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 255 tests
+npm test         # 303 tests
 npm run build
 ```
 
@@ -361,4 +367,9 @@ a deployed environment.
     qualitative nuclear-fission diagram (§৪.৬)
 13. Chapter 4's নমুনা প্রশ্ন MCQs (p. 123+) are not yet digitised into
     `Question` rows
-14. Chapter 5 has not yet been identified or read from the source PDF
+14. Chapter 5 Tier 2 (optional): a Pascal's-law hydraulic-press demo (§৫.৩.৩),
+    a pressure-vs-altitude explorer (§৫.৪, চিত্র ৫.০৯), and a qualitative
+    solid/liquid/gas/plasma molecular-spacing gallery (§৫.৬–৫.৬.২)
+15. Chapter 5's নমুনা প্রশ্ন MCQs (p. 155+) are not yet digitised into
+    `Question` rows
+16. Chapter 6 has not yet been identified or read from the source PDF

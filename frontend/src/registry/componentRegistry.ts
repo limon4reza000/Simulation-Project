@@ -15,6 +15,10 @@ import Work from '../components/energy/Work'
 import EnergyConversion from '../components/energy/EnergyConversion'
 import PendulumEnergy from '../components/energy/PendulumEnergy'
 import PowerEfficiency from '../components/energy/PowerEfficiency'
+import Pressure from '../components/pressure/Pressure'
+import LiquidPressure from '../components/pressure/LiquidPressure'
+import Archimedes from '../components/pressure/Archimedes'
+import HookesLaw from '../components/pressure/HookesLaw'
 import type { Renderer } from './types'
 
 /**
@@ -47,6 +51,10 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_ENERGY_CONVERSION: EnergyConversion as unknown as Renderer,
   SIM_PENDULUM_ENERGY: PendulumEnergy as unknown as Renderer,
   SIM_POWER_EFFICIENCY: PowerEfficiency as unknown as Renderer,
+  SIM_PRESSURE: Pressure as unknown as Renderer,
+  SIM_LIQUID_PRESSURE: LiquidPressure as unknown as Renderer,
+  SIM_ARCHIMEDES: Archimedes as unknown as Renderer,
+  SIM_HOOKES_LAW: HookesLaw as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {
