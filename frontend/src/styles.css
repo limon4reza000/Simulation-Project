@@ -33,42 +33,13 @@
    */
   --font-bn: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Bengali',
     'Nirmala UI', 'SolaimanLipi', 'Kalpurush', sans-serif;
-}
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #11161d;
-    --surface: #1a212b;
-    --border: #2d3947;
-    --ink: #e8edf3;
-    --ink-muted: #9aa8b8;
-    --accent: #5b9bff;
-    --accent-soft: #1d2b42;
-    --match: #ff8a5c;
-    --metal: #46536380;
-    --metal-dark: #6b7c90;
-    --object: #b98f1f;
-    --band: #24405f;
-    --ok: #4cc38a;
-    --bad: #ff6b61;
-  }
-}
-
-:root[data-theme='dark'] {
-  --bg: #11161d;
-  --surface: #1a212b;
-  --border: #2d3947;
-  --ink: #e8edf3;
-  --ink-muted: #9aa8b8;
-  --accent: #5b9bff;
-  --accent-soft: #1d2b42;
-  --match: #ff8a5c;
-  --metal: #46536380;
-  --metal-dark: #6b7c90;
-  --object: #b98f1f;
-  --band: #24405f;
-  --ok: #4cc38a;
-  --bad: #ff6b61;
+  /*
+   * Light only. Without this the browser still paints scrollbars, select
+   * popups, checkboxes and autofill backgrounds dark on a machine set to dark
+   * mode, leaving dark chrome around a light page.
+   */
+  color-scheme: light;
 }
 
 * {

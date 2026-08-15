@@ -5,6 +5,10 @@
  * form sits directly on the page with the green CTA as the only strong element.
  * On desktop the column simply stays narrow and centred rather than becoming a
  * different layout — a login form gains nothing from extra width.
+ *
+ * Light only, deliberately. This is a light design; following the operating
+ * system into dark mode turned the whole screen near-black, which is not a
+ * darker version of this design but a different one.
  */
 
 .auth {
@@ -14,7 +18,7 @@
    * only ~3.9:1, under the 4.5:1 needed for body text. This clears it.
    */
   --auth-muted: #5f6570;
-  --auth-field: #fdfdfc;
+  --auth-field: #ffffff;
   --auth-field-ink: #14161a;
   --auth-placeholder: #7c828d;
   --auth-green-a: #57e08a;
@@ -26,7 +30,7 @@
    * ground exactly or it shows as a patch — the glow is faint enough at that
    * point in the page for a flat colour to be indistinguishable.
    */
-  --auth-veil: #e7e7e7;
+  --auth-veil: #f6f6f4;
 
   min-height: 100dvh;
   display: grid;
@@ -46,53 +50,7 @@
       rgba(238, 235, 176, 0.32) 0%,
       rgba(238, 235, 176, 0) 60%
     ),
-    #e7e7e7;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .auth {
-    --auth-ink: #f0f2f3;
-    --auth-muted: #a3aab4;
-    --auth-field: #1e2126;
-    --auth-field-ink: #f0f2f3;
-    --auth-placeholder: #858c96;
-    --auth-line: rgba(255, 255, 255, 0.14);
-    --auth-veil: #16181b;
-    background:
-      radial-gradient(
-        125% 46% at 50% 0%,
-        rgba(52, 90, 58, 0.4) 0%,
-        rgba(52, 90, 58, 0) 60%
-      ),
-      radial-gradient(
-        120% 42% at 50% 100%,
-        rgba(86, 84, 44, 0.35) 0%,
-        rgba(86, 84, 44, 0) 62%
-      ),
-      #16181b;
-  }
-}
-
-:root[data-theme='dark'] .auth {
-  --auth-ink: #f0f2f3;
-  --auth-muted: #a3aab4;
-  --auth-field: #1e2126;
-  --auth-field-ink: #f0f2f3;
-  --auth-placeholder: #858c96;
-  --auth-line: rgba(255, 255, 255, 0.14);
-  --auth-veil: #16181b;
-  background:
-    radial-gradient(
-      125% 46% at 50% 0%,
-      rgba(52, 90, 58, 0.4) 0%,
-      rgba(52, 90, 58, 0) 60%
-    ),
-    radial-gradient(
-      120% 42% at 50% 100%,
-      rgba(86, 84, 44, 0.35) 0%,
-      rgba(86, 84, 44, 0) 62%
-    ),
-    #16181b;
+    #f6f6f4;
 }
 
 /* Reference column width. Stays put on desktop instead of stretching. */
@@ -113,11 +71,6 @@
   color: var(--auth-ink);
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(20, 22, 26, 0.09);
-}
-
-:root[data-theme='dark'] .auth__back,
-:root:not([data-theme='light']) .auth .auth__back {
-  background: var(--auth-field);
 }
 
 .auth__backIcon {
@@ -414,11 +367,6 @@
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-:root[data-theme='dark'] .auth__socialBtn,
-:root:not([data-theme='light']) .auth .auth__socialBtn {
-  background: var(--auth-field);
-}
-
 .auth__socialBtn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(20, 22, 26, 0.14);
@@ -441,11 +389,6 @@
   font-size: 0.7rem;
   line-height: 1.5;
   text-align: center;
-}
-
-:root[data-theme='dark'] .auth__notice,
-:root:not([data-theme='light']) .auth .auth__notice {
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .auth__legal {
