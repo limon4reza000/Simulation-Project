@@ -1,35 +1,39 @@
 /*
  * Authentication screens.
  *
- * A soft, mobile-first sheet on a mint-to-butter gradient. These are the only
- * screens seen before an account exists, so they carry their own palette rather
- * than the neutral surfaces used inside the app. The column stays narrow on
- * wide monitors: a login form gains nothing from being 1200px across, and a
- * short line length is easier to scan.
+ * A mobile-first sheet on a flat neutral ground. These are the only screens seen
+ * before an account exists, so they carry their own palette rather than the
+ * neutral surfaces used inside the app. The column stays narrow on wide
+ * monitors: a login form gains nothing from being 1200px across, and a short
+ * line length is easier to scan.
  */
 
 .auth {
   --auth-ink: #14181f;
-  --auth-muted: #6b7280;
+  /*
+   * Darker than the usual #6b7280: against #e7e7e7 that grey reaches only
+   * 3.9:1, under the 4.5:1 needed for body text. This clears it at ~4.9:1.
+   */
+  --auth-muted: #5b6472;
   --auth-input: #ffffff;
   --auth-input-ink: #14181f;
-  --auth-placeholder: #9aa2af;
+  --auth-placeholder: #7b8494;
   --auth-green-a: #5fe08a;
   --auth-green-b: #22c55e;
-  --auth-accent: #e5484d;
-  --auth-line: rgba(20, 24, 31, 0.1);
-  --auth-veil: #f4f8f3;
+  --auth-accent: #d13438;
+  --auth-line: rgba(20, 24, 31, 0.14);
+  /*
+   * Must equal the page background exactly. The or-divider paints this behind
+   * its label to break the rule; any mismatch shows as a patch.
+   */
+  --auth-veil: #e7e7e7;
 
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 28px 18px 40px;
   color: var(--auth-ink);
-  background:
-    radial-gradient(70% 55% at 18% 0%, #cdeec9 0%, rgba(205, 238, 201, 0) 60%),
-    radial-gradient(75% 55% at 88% 6%, #d8f1d1 0%, rgba(216, 241, 209, 0) 55%),
-    radial-gradient(85% 45% at 50% 100%, #f3f1c6 0%, rgba(243, 241, 198, 0) 65%),
-    #f7f9f6;
+  background: #e7e7e7;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,12 +43,9 @@
     --auth-input: #1d2622;
     --auth-input-ink: #eaf0ea;
     --auth-placeholder: #7d8c82;
-    --auth-line: rgba(255, 255, 255, 0.12);
-    --auth-veil: #131a16;
-    background:
-      radial-gradient(70% 55% at 18% 0%, #1c3327 0%, rgba(28, 51, 39, 0) 60%),
-      radial-gradient(85% 45% at 50% 100%, #2e3020 0%, rgba(46, 48, 32, 0) 65%),
-      #101613;
+    --auth-line: rgba(255, 255, 255, 0.14);
+    --auth-veil: #1b1b1b;
+    background: #1b1b1b;
   }
 }
 
@@ -54,12 +55,9 @@
   --auth-input: #1d2622;
   --auth-input-ink: #eaf0ea;
   --auth-placeholder: #7d8c82;
-  --auth-line: rgba(255, 255, 255, 0.12);
-  --auth-veil: #131a16;
-  background:
-    radial-gradient(70% 55% at 18% 0%, #1c3327 0%, rgba(28, 51, 39, 0) 60%),
-    radial-gradient(85% 45% at 50% 100%, #2e3020 0%, rgba(46, 48, 32, 0) 65%),
-    #101613;
+  --auth-line: rgba(255, 255, 255, 0.14);
+  --auth-veil: #1b1b1b;
+  background: #1b1b1b;
 }
 
 .auth__sheet {
@@ -78,7 +76,7 @@
   background: var(--auth-input);
   color: var(--auth-ink);
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(20, 40, 25, 0.12);
+  box-shadow: 0 6px 18px rgba(20, 24, 31, 0.13);
 }
 
 .auth__backIcon {
@@ -146,7 +144,7 @@
   border: 1px solid transparent;
   border-radius: 16px;
   background: var(--auth-input);
-  box-shadow: 0 6px 18px rgba(20, 40, 25, 0.07);
+  box-shadow: 0 6px 18px rgba(20, 24, 31, 0.09);
   transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
@@ -346,13 +344,13 @@
   border-radius: 50%;
   background: var(--auth-input);
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(20, 40, 25, 0.1);
+  box-shadow: 0 6px 16px rgba(20, 24, 31, 0.12);
   transition: transform 130ms ease, box-shadow 130ms ease;
 }
 
 .auth__socialBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(20, 40, 25, 0.16);
+  box-shadow: 0 10px 20px rgba(20, 24, 31, 0.18);
 }
 
 .auth__socialMark {
@@ -367,7 +365,7 @@
   padding: 10px 12px;
   border: 1px solid var(--auth-line);
   border-radius: 12px;
-  background: rgba(20, 24, 31, 0.05);
+  background: rgba(255, 255, 255, 0.6);
   color: var(--auth-muted);
   font-size: 0.8rem;
   line-height: 1.5;
