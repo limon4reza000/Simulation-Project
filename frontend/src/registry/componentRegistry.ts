@@ -19,6 +19,10 @@ import Pressure from '../components/pressure/Pressure'
 import LiquidPressure from '../components/pressure/LiquidPressure'
 import Archimedes from '../components/pressure/Archimedes'
 import HookesLaw from '../components/pressure/HookesLaw'
+import TemperatureScales from '../components/heat/TemperatureScales'
+import ThermalExpansion from '../components/heat/ThermalExpansion'
+import HeatingCurve from '../components/heat/HeatingCurve'
+import CalorimetryLab from '../components/heat/CalorimetryLab'
 import type { Renderer } from './types'
 
 /**
@@ -55,6 +59,10 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_LIQUID_PRESSURE: LiquidPressure as unknown as Renderer,
   SIM_ARCHIMEDES: Archimedes as unknown as Renderer,
   SIM_HOOKES_LAW: HookesLaw as unknown as Renderer,
+  SIM_TEMPERATURE_SCALES: TemperatureScales as unknown as Renderer,
+  SIM_THERMAL_EXPANSION: ThermalExpansion as unknown as Renderer,
+  SIM_HEATING_CURVE: HeatingCurve as unknown as Renderer,
+  SIM_CALORIMETRY: CalorimetryLab as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {
