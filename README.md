@@ -1,22 +1,25 @@
 # Interactive Learning and Simulation Platform
 
 An interactive learning platform for Bangladeshi secondary students, built on
-NCTB curriculum content. First vertical slice: **Physics, Class 9–10, Chapter 1
-— ভৌত রাশি এবং তাদের পরিমাপ**.
+NCTB curriculum content. First vertical slice: **Physics, Class 9–10**,
+Chapters 1–2 — ভৌত রাশি এবং তাদের পরিমাপ, গতি.
 
 ## Status
+
+288 tests passing (137 backend, 151 frontend), plus live-database and
+browser-driven verification for every renderer.
 
 | Area | State |
 |---|---|
 | Database schema | Migrated and verified against MySQL 8.4.9; all CHECK constraints proven to enforce |
-| Seed script | Runs clean: 2 classes, 9 topics, 5 lessons, 5 questions, 11 components |
-| Instrument logic | Complete, 32 unit tests against printed worked examples |
-| Renderers | 4 built: vernier caliper, screw gauge, error propagation, log-scale explorer |
-| Component registry | Complete, 11 tests |
-| API layer | Catalog, lesson, activity and quiz endpoints; 58 tests plus a 31-check live-database flow |
-| Auth | Separate student/teacher login and registration; session cookies, scrypt passwords |
-| Quizzes | Server-graded, verified live; 5 of the 6 printed MCQs seeded |
-| Progress aggregation | Derived from lessons and quiz scores; 18 unit + 25 live-database checks |
+| Seed | Chapter 1 + Chapter 2, each idempotent and independently re-runnable |
+| Renderers | 9 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher — each with pure-logic tests checked against the book's own equations or printed figures |
+| Component registry | The architectural core: adding an artefact is one component + one registry line |
+| API layer | Catalog, lesson, activity, quiz, progress, auth, registration, teacher-roster and admin-assignment endpoints |
+| Auth | Separate student/teacher login and registration; session cookies, scrypt passwords, role enforced server-side |
+| Teacher scoping | `TeacherAssignment`-scoped class rosters; only an ADMIN can grant or revoke a teacher's access to a class |
+| Quizzes | Server-graded, verified live; the answer key never reaches the browser |
+| Progress aggregation | Derived from lessons and quiz scores, never incremented in place; weak-topic identification |
 
 The quiz flow has been exercised end to end against a real MySQL 8.4 server:
 scoring, per-question persistence, attempt ownership (403), duplicate submission
@@ -28,21 +31,29 @@ student-facing response.
 ```
 backend/
   prisma/
-    schema.prisma              34 models; see docs/architecture/schema-decisions.md
+    schema.prisma              35 models; see docs/architecture/schema-decisions.md
     sql/01_check_constraints.sql   integrity rules Prisma cannot express
     seed.ts                    Physics 9–10 Chapter 1
+  scripts/
+    seedChapter2.ts            additive, per-lesson idempotent — see its header
 frontend/
   src/
-    lib/instruments/           pure reading logic — no React, fully tested
+    lib/instruments/           Chapter 1 instrument logic — no React, fully tested
     lib/measurement/           error propagation
+    lib/kinematics/            Chapter 2 kinematics logic — free fall, inclined
+                                plane, path geometry, motion grapher
     components/instruments/    VernierCaliper, ScrewGauge (SVG)
     components/measurement/    ErrorPropagationLab
     components/viz/            LogScaleExplorer
+    components/kinematics/     FreeFall, InclinedPlane, DistanceDisplacement,
+                                MotionGrapher
     registry/                  the component registry — the load-bearing abstraction
     data/chapter01.ts          fixtures standing in for the API
 docs/
   architecture/schema-decisions.md   every deviation from the report, justified
   content/physics-9-10-chapter-01.md content plan traced to book pages
+  content/physics-9-10-chapter-02.md same, for Chapter 2
+  content/textbook-issues.md         printing defects found in the source book
 ```
 
 ## Running it
@@ -53,7 +64,7 @@ docs/
 cd frontend
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 52 tests
+npm test         # 151 tests
 npm run build
 ```
 
@@ -71,7 +82,7 @@ npx prisma migrate deploy          # creates the 35 tables
 mysql -u USER -p ilsp_dev < prisma/sql/01_check_constraints.sql
 npm run db:seed
 npm run dev                        # API on http://localhost:4000
-npm test                           # 82 tests, no database required
+npm test                           # 137 tests, no database required
 ```
 
 The constraints are applied as a **separate step**, not pasted into the
@@ -113,6 +124,11 @@ message } }` on failure.
 | POST | `/api/auth/register/student` | Always creates a STUDENT; class required |
 | POST | `/api/auth/register/teacher` | Always creates a TEACHER |
 | GET | `/api/teacher/overview` | TEACHER only; scoped by TeacherAssignment |
+| GET | `/api/teacher/classes/:id/students` | TEACHER only; 403 unless assigned to that class |
+| GET | `/api/admin/assignable` | ADMIN only; teachers/classes/subjects for the assignment form |
+| GET | `/api/admin/assignments` | ADMIN only; every current TeacherAssignment |
+| POST | `/api/admin/assignments` | ADMIN only; grants a teacher access to a class |
+| DELETE | `/api/admin/assignments/:id` | ADMIN only; revokes it, and is audit-logged |
 | POST | `/api/lessons/:id/progress` | Records the caller's own lesson progress |
 | GET | `/api/chapters/:id/progress` | The caller's own progress, with weak topics |
 
@@ -303,16 +319,22 @@ a deployed environment.
 
 ## Next
 
-1. Move the login rate limiter out of process memory before running more than
-   one API instance
-2. Give the seed natural unique keys so content can be upserted rather than
-   skipped — see the note below
-2. Password reset, so the login page can offer "Forgot password?"
+1. **Admin UI.** `POST/DELETE /api/admin/assignments` exist and are tested, but
+   there is no screen to call them from — an admin can only grant or revoke a
+   teacher's class today via curl or a REST client. Every registered teacher
+   therefore still sees an empty roster in the browser until this exists.
+2. Password reset, so the login page can offer a real "Forgot password?"
+   instead of the honest placeholder it shows now
 3. Phone as an alternative login identifier — the current design is email-only,
    and adding phone means a second unique column and a second login path
-4. Admin screens for creating `TeacherAssignment` rows, so teacher dashboards
-   show real classes
-3. Quiz engine, seeded from the নমুনা প্রশ্ন MCQs on book pp. 29–31
-4. Progress aggregation from `LessonProgress` / `TopicProgress`
-5. Time how long instrument #3 takes and record it — that number is the
-   extensibility evidence the report needs
+4. Move the login/registration rate limiter out of process memory before
+   running more than one API instance
+5. Give `prisma/seed.ts` natural unique keys so its content can be upserted
+   rather than skipped on re-run — `scripts/seedChapter2.ts` already does this
+   per-lesson and is the pattern to follow
+6. Chapter 2 Tier 2 (optional): a small canned-animation gallery for the five
+   motion types in §২.২, and a general-purpose two-arrow vector adder reusable
+   in later force chapters
+7. Chapter 2's নমুনা প্রশ্ন MCQs are not yet digitised into `Question` rows
+8. Confirm the section number for গতি ও লেখচিত্র (pp. 51–53) — read but not
+   pinned down against the printed page

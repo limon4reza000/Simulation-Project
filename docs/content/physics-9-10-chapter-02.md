@@ -45,23 +45,25 @@ Galileo's three laws of falling bodies (p. 48), stated explicitly in the book:
 
 ## Visualization and simulation plan
 
-### Tier 1 — build these
+### Tier 1 — done
 
-#### 1. `SIM_FREE_FALL` — পড়ন্ত বস্তুর সূত্র (built this session)
+All four built, registered, seeded (`scripts/seedChapter2.ts`), and verified live: signed in as the seeded student, walked all four lessons in a real browser, confirmed no negative-SVG-width regressions (the screw-gauge bug class), confirmed the grapher's three panels visually reproduce চিত্র ২.০৯'s shape.
 
-Digitises Galileo's three laws (p. 48) and the free-fall equations (p. 49) directly. A ball drops under `g = 9.8 m/s²`; live readouts show `v = gt` and `h = ½gt²`; a v–t plot and an h–t plot render alongside so the "v ∝ t, h ∝ t²" relationships in the book are seen, not just stated. Two-drop mode (different masses, same height) demonstrates the first law — same fall time regardless of mass.
+#### 1. `SIM_FREE_FALL` — পড়ন্ত বস্তুর সূত্র
+
+Digitises Galileo's three laws (p. 48) and the free-fall equations (p. 49) directly. A ball drops under `g = 9.8 m/s²`; live readouts show `v = gt` and `h = ½gt²`; a v–t plot and an h–t plot render alongside so the "v ∝ t, h ∝ t²" relationships in the book are seen, not just stated. Two-drop mode (different masses, same height) demonstrates the first law — same fall time regardless of mass. The reading model takes no mass parameter at all, matching the book's own equations.
 
 #### 2. `SIM_INCLINED_PLANE` — অনুসন্ধান ২.০১
 
-Book pp. 54–56 give a complete, citable lab: ramp length `L`, height `h`, angle `sin θ = h/L`, a ball timed rolling down, average speed `= L/t`, repeated across inclines. Same shape as the vernier caliper investigation in Chapter 1 — a printed procedure to digitise, not invented pedagogy.
+Book pp. 54–56 give a complete, citable lab: ramp length `L`, height `h`, angle `sin θ = h/L`, a ball timed rolling down, average speed `= L/t`, repeated across inclines with a results table. Same shape as the vernier caliper investigation in Chapter 1. Unlike that investigation, no worked numeric example is printed against this one — the tests say so explicitly and check the model against §২.৭'s equations of motion instead.
 
 #### 3. `VIZ_DISTANCE_DISPLACEMENT` — চিত্র ২.০৪
 
-The book's winding-path figure (p. 39) is naturally interactive: a draggable point along a curved path accumulates distance while the displacement vector (straight line, start to current position) updates live. Makes the scalar/vector distinction in §২.৪ felt rather than defined.
+A slider walks a point along a curved path; distance travelled (path length) and displacement (straight line from the start) update live. The default path is constructed to reproduce the book's own two printed relationships exactly — distance 4 km / displacement 3 km at one point, 6 km / 1.5 km further on — since the figure's underlying coordinates are not printed.
 
 #### 4. `VIZ_MOTION_GRAPHER` — গতি ও লেখচিত্র, চিত্র ২.০৯
 
-The book's own worked example (p. 52) links s–t, v–t and a–t graphs from one dataset. A linked three-panel grapher — drag points on s–t, watch v–t and a–t update — makes the graphical-differentiation argument in this chapter far stronger than three static plots.
+Derives v–t and a–t from an s–t dataset by the book's own method (p. 52): the midpoint rate between consecutive readings. Checked against টেবিল ২.০১'s own numbers and against the method's own exactness for a quadratic (recovers `v = 2t`, `a = 2` with no rounding error). Both dataset rows from the table are selectable.
 
 ### Tier 2 — build if time allows
 
@@ -70,14 +72,7 @@ The book's own worked example (p. 52) links s–t, v–t and a–t graphs from o
 | `VIZ_MOTION_TYPES` | §২.২ | Small gallery: linear, circular, translational, periodic, SHM (pendulum), one canned animation each. Illustrative, not quantitative — lower priority than the Tier 1 items. |
 | `VIZ_VECTOR_ADD` | §২.৩ | Two draggable vector arrows with a live resultant. General-purpose enough to reuse in later force chapters. |
 
-## Build order
-
-1. `SIM_FREE_FALL` — pure logic, tested against the book's own equations, then the renderer
-2. `SIM_INCLINED_PLANE` — same shape as the Chapter 1 caliper investigation
-3. `VIZ_DISTANCE_DISPLACEMENT`
-4. `VIZ_MOTION_GRAPHER`
-
-## Open items before seeding
+## Open items
 
 1. Confirm the section number for গতি ও লেখচিত্র (pp. 51–53).
 2. Digitise the বহুনির্বাচনি প্রশ্ন MCQs (p. 59+) into `Question` rows — same treatment as Chapter 1's নমুনা প্রশ্ন, watching for the kind of printing ambiguity found in Chapter 1 Q4.
