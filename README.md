@@ -2,18 +2,18 @@
 
 An interactive learning platform for Bangladeshi secondary students, built on
 NCTB curriculum content. First vertical slice: **Physics, Class 9–10**,
-Chapters 1–2 — ভৌত রাশি এবং তাদের পরিমাপ, গতি.
+Chapters 1–3 (partial) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল.
 
 ## Status
 
-288 tests passing (137 backend, 151 frontend), plus live-database and
+300 tests passing (137 backend, 163 frontend), plus live-database and
 browser-driven verification for every renderer.
 
 | Area | State |
 |---|---|
 | Database schema | Migrated and verified against MySQL 8.4.9; all CHECK constraints proven to enforce |
-| Seed | Chapter 1 + Chapter 2, each idempotent and independently re-runnable |
-| Renderers | 9 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher — each with pure-logic tests checked against the book's own equations or printed figures |
+| Seed | Chapters 1–3, each idempotent and independently re-runnable |
+| Renderers | 10 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision — each with pure-logic tests checked against the book's own equations or printed figures |
 | Component registry | The architectural core: adding an artefact is one component + one registry line |
 | API layer | Catalog, lesson, activity, quiz, progress, auth, registration, teacher-roster and admin-assignment endpoints |
 | Auth | Separate student/teacher login and registration; session cookies, scrypt passwords, role enforced server-side |
@@ -64,7 +64,7 @@ docs/
 cd frontend
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 151 tests
+npm test         # 163 tests
 npm run build
 ```
 
