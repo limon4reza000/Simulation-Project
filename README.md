@@ -181,8 +181,24 @@ Session cookies, not tokens in localStorage.
   12 hours to 30 days. Still bounded — a session that never expires is a
   credential that cannot be revoked by time.
 
-There is deliberately **no "Forgot password?" link**. No reset flow exists yet,
-and a link that goes nowhere is worse than its absence.
+#### Controls that are honest about not working yet
+
+The auth screens follow a design that includes social sign-in, a forgot-password
+link and legal links. None of those exist behind the scenes, so rather than
+render controls that silently do nothing:
+
+- **Social sign-in buttons** (Facebook, Google, Apple, Microsoft) are shown, but
+  pressing one says plainly that the provider is not connected and to use email.
+  There is no OAuth client, no redirect handler and no account-linking model.
+- **"Forgot Password"** explains that reset is not available and to ask a
+  teacher or administrator — which is what someone locked out can actually do
+  today.
+- **Terms and Privacy** are plain text, not links, because the documents do not
+  exist. Linking to nothing on the screen where someone agrees to them would be
+  the worst possible place to do it.
+
+Each becomes real work rather than a UI change: wire OAuth, build reset, write
+the documents. Until then the screens say so.
 
 Because the cookie is cross-origin in development, CORS runs with
 `credentials: true` and an explicit origin allowlist — a wildcard origin cannot

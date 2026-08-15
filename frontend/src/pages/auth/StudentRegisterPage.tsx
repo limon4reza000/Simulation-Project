@@ -7,7 +7,8 @@ import {
   type EnrollableClass,
 } from '../../lib/api'
 import { useAuth, homeRouteFor } from '../../auth/AuthContext'
-import { AuthLayout, Field, AuthSwitch } from './AuthLayout'
+import { AuthLayout, Field, PasswordField, AuthLink } from './AuthLayout'
+import { MailIcon, UserIcon, ClassIcon, ChevronDownIcon } from './AuthIcons'
 import type { Language } from '../../registry/types'
 
 /**
@@ -20,21 +21,21 @@ import type { Language } from '../../registry/types'
  */
 
 const T = {
-  title: { bn: 'শিক্ষার্থী রেজিস্ট্রেশন', en: 'Student registration' },
+  title: { bn: 'অ্যাকাউন্ট খোলো', en: 'Create Account' },
   subtitle: { bn: 'অ্যাকাউন্ট তৈরি করে শেখা শুরু করো', en: 'Create an account to start learning' },
   name: { bn: 'পুরো নাম', en: 'Full name' },
   classLabel: { bn: 'শ্রেণি', en: 'Class' },
   classPlaceholder: { bn: 'তোমার শ্রেণি বেছে নাও', en: 'Choose your class' },
-  email: { bn: 'ইমেইল', en: 'Email' },
+  email: { bn: 'ইমেইল', en: 'Email Address' },
   password: { bn: 'পাসওয়ার্ড', en: 'Password' },
   confirm: { bn: 'পাসওয়ার্ড আবার লিখো', en: 'Confirm password' },
   passwordHint: { bn: 'কমপক্ষে ৮ অক্ষর', en: 'At least 8 characters' },
-  submit: { bn: 'অ্যাকাউন্ট তৈরি করো', en: 'Create account' },
+  submit: { bn: 'অ্যাকাউন্ট তৈরি করো', en: 'Create Account' },
   working: { bn: 'তৈরি হচ্ছে…', en: 'Creating…' },
   mismatch: { bn: 'দুটি পাসওয়ার্ড মিলছে না', en: 'Passwords do not match' },
   needClass: { bn: 'শ্রেণি বেছে নাও', en: 'Please choose your class' },
   offline: { bn: 'সার্ভারে পৌঁছানো যাচ্ছে না।', en: 'Could not reach the server.' },
-  haveAccount: { bn: 'লগইন করো', en: 'Sign in' },
+  haveAccount: { bn: 'সাইন ইন', en: 'Sign In' },
   teacher: { bn: 'আপনি কি শিক্ষক?', en: 'Are you a teacher?' },
 } as const
 
@@ -94,34 +95,27 @@ export default function StudentRegisterPage({
 
   return (
     <AuthLayout
-      wide
-      brandLine={language === 'BN' ? 'সিমুলেশন ল্যাব' : 'SIMULATION LAB'}
+      language={language}
+      backTo="/login/student"
+      eyebrow={language === 'BN' ? 'শিক্ষার্থী রেজিস্ট্রেশন' : 'Student sign up'}
       title={t('title')}
       subtitle={t('subtitle')}
       error={error}
-      footer={
+      switchLine={
         <>
-          <AuthSwitch
-            language={language}
-            lead={language === 'BN' ? 'অ্যাকাউন্ট আছে?' : 'Already have an account?'}
-            to="/login/student"
-            labelBn={T.haveAccount.bn}
-            labelEn={T.haveAccount.en}
-          />
-          <AuthSwitch
-            language={language}
-            to="/register/teacher"
-            labelBn={T.teacher.bn}
-            labelEn={T.teacher.en}
-          />
+          {language === 'BN' ? 'অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
+          <AuthLink to="/login/student">{t('haveAccount')}</AuthLink>
+          <br />
+          <AuthLink to="/register/teacher">{t('teacher')}</AuthLink>
         </>
       }
     >
-      <form onSubmit={onSubmit} className="authform">
-        <Field label={t('name')}>
+      <form onSubmit={onSubmit} className="auth__form">
+        <Field label={t('name')} icon={<UserIcon />}>
           <input
             type="text"
             value={name}
+            placeholder={t('name')}
             autoComplete="name"
             required
             minLength={2}
@@ -129,11 +123,19 @@ export default function StudentRegisterPage({
           />
         </Field>
 
-        <Field label={t('classLabel')}>
+        {/* Required. The server validates it again against published classes. */}
+        <Field
+          label={t('classLabel')}
+          icon={<ClassIcon />}
+          trailing={<ChevronDownIcon />}
+        >
           <select
             value={classLevel}
             required
             aria-label={t('classLabel')}
+            /* Greyed until chosen, so an unpicked class does not read as an
+               answer the student has already given. */
+            className={classLevel ? '' : 'is-placeholder'}
             onChange={(e) => setClassLevel(e.target.value)}
           >
             <option value="">{t('classPlaceholder')}</option>
@@ -145,38 +147,38 @@ export default function StudentRegisterPage({
           </select>
         </Field>
 
-        <Field label={t('email')}>
+        <Field label={t('email')} icon={<MailIcon />}>
           <input
             type="email"
             value={email}
+            placeholder={t('email')}
             autoComplete="username"
             required
             onChange={(e) => setEmail(e.target.value)}
           />
         </Field>
 
-        <Field label={t('password')} hint={t('passwordHint')}>
-          <input
-            type="password"
-            value={password}
-            autoComplete="new-password"
-            required
-            minLength={8}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
+        <PasswordField
+          label={t('password')}
+          language={language}
+          value={password}
+          placeholder={t('password')}
+          autoComplete="new-password"
+          minLength={8}
+          onChange={setPassword}
+          hint={t('passwordHint')}
+        />
 
-        <Field label={t('confirm')}>
-          <input
-            type="password"
-            value={confirm}
-            autoComplete="new-password"
-            required
-            onChange={(e) => setConfirm(e.target.value)}
-          />
-        </Field>
+        <PasswordField
+          label={t('confirm')}
+          language={language}
+          value={confirm}
+          placeholder={t('confirm')}
+          autoComplete="new-password"
+          onChange={setConfirm}
+        />
 
-        <button type="submit" disabled={busy}>
+        <button type="submit" className="auth__primary" disabled={busy}>
           {busy ? t('working') : t('submit')}
         </button>
       </form>

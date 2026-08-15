@@ -2,7 +2,8 @@ import { useCallback, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { registerTeacher, ApiError } from '../../lib/api'
 import { useAuth, homeRouteFor } from '../../auth/AuthContext'
-import { AuthLayout, Field, AuthSwitch } from './AuthLayout'
+import { AuthLayout, Field, PasswordField, AuthLink } from './AuthLayout'
+import { MailIcon, UserIcon, BuildingIcon } from './AuthIcons'
 import type { Language } from '../../registry/types'
 
 /**
@@ -14,18 +15,18 @@ import type { Language } from '../../registry/types'
  */
 
 const T = {
-  title: { bn: 'শিক্ষক রেজিস্ট্রেশন', en: 'Teacher registration' },
+  title: { bn: 'শিক্ষক অ্যাকাউন্ট', en: 'Create Account' },
   subtitle: {
     bn: 'অ্যাকাউন্ট তৈরি করে আপনার ক্লাস পরিচালনা করুন',
     en: 'Create an account to manage your classes',
   },
   name: { bn: 'পুরো নাম', en: 'Full name' },
   institution: { bn: 'প্রতিষ্ঠান (ঐচ্ছিক)', en: 'Institution (optional)' },
-  email: { bn: 'ইমেইল', en: 'Email' },
+  email: { bn: 'ইমেইল', en: 'Email Address' },
   password: { bn: 'পাসওয়ার্ড', en: 'Password' },
   confirm: { bn: 'পাসওয়ার্ড আবার লিখুন', en: 'Confirm password' },
   passwordHint: { bn: 'কমপক্ষে ৮ অক্ষর', en: 'At least 8 characters' },
-  submit: { bn: 'অ্যাকাউন্ট তৈরি করুন', en: 'Create account' },
+  submit: { bn: 'অ্যাকাউন্ট তৈরি করুন', en: 'Create Account' },
   working: { bn: 'তৈরি হচ্ছে…', en: 'Creating…' },
   mismatch: { bn: 'দুটি পাসওয়ার্ড মিলছে না', en: 'Passwords do not match' },
   offline: { bn: 'সার্ভারে পৌঁছানো যাচ্ছে না।', en: 'Could not reach the server.' },
@@ -33,7 +34,7 @@ const T = {
     bn: 'আপনার ক্লাস প্রশাসক নির্ধারণ করবেন।',
     en: 'An administrator assigns your classes after registration.',
   },
-  haveAccount: { bn: 'লগইন করুন', en: 'Sign in' },
+  haveAccount: { bn: 'সাইন ইন', en: 'Sign In' },
   student: { bn: 'আপনি কি শিক্ষার্থী?', en: 'Are you a student?' },
 } as const
 
@@ -81,34 +82,27 @@ export default function TeacherRegisterPage({
 
   return (
     <AuthLayout
-      wide
-      brandLine={language === 'BN' ? 'সিমুলেশন ল্যাব' : 'SIMULATION LAB'}
+      language={language}
+      backTo="/login/teacher"
+      eyebrow={language === 'BN' ? 'শিক্ষক রেজিস্ট্রেশন' : 'Teacher sign up'}
       title={t('title')}
       subtitle={t('subtitle')}
       error={error}
-      footer={
+      switchLine={
         <>
-          <AuthSwitch
-            language={language}
-            lead={language === 'BN' ? 'অ্যাকাউন্ট আছে?' : 'Already have an account?'}
-            to="/login/teacher"
-            labelBn={T.haveAccount.bn}
-            labelEn={T.haveAccount.en}
-          />
-          <AuthSwitch
-            language={language}
-            to="/register/student"
-            labelBn={T.student.bn}
-            labelEn={T.student.en}
-          />
+          {language === 'BN' ? 'অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
+          <AuthLink to="/login/teacher">{t('haveAccount')}</AuthLink>
+          <br />
+          <AuthLink to="/register/student">{t('student')}</AuthLink>
         </>
       }
     >
-      <form onSubmit={onSubmit} className="authform">
-        <Field label={t('name')}>
+      <form onSubmit={onSubmit} className="auth__form">
+        <Field label={t('name')} icon={<UserIcon />}>
           <input
             type="text"
             value={name}
+            placeholder={t('name')}
             autoComplete="name"
             required
             minLength={2}
@@ -116,47 +110,52 @@ export default function TeacherRegisterPage({
           />
         </Field>
 
-        <Field label={t('institution')} hint={t('assignmentNote')}>
+        <Field
+          label={t('institution')}
+          icon={<BuildingIcon />}
+          hint={t('assignmentNote')}
+        >
           <input
             type="text"
             value={institution}
+            placeholder={t('institution')}
             autoComplete="organization"
             onChange={(e) => setInstitution(e.target.value)}
           />
         </Field>
 
-        <Field label={t('email')}>
+        <Field label={t('email')} icon={<MailIcon />}>
           <input
             type="email"
             value={email}
+            placeholder={t('email')}
             autoComplete="username"
             required
             onChange={(e) => setEmail(e.target.value)}
           />
         </Field>
 
-        <Field label={t('password')} hint={t('passwordHint')}>
-          <input
-            type="password"
-            value={password}
-            autoComplete="new-password"
-            required
-            minLength={8}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
+        <PasswordField
+          label={t('password')}
+          language={language}
+          value={password}
+          placeholder={t('password')}
+          autoComplete="new-password"
+          minLength={8}
+          onChange={setPassword}
+          hint={t('passwordHint')}
+        />
 
-        <Field label={t('confirm')}>
-          <input
-            type="password"
-            value={confirm}
-            autoComplete="new-password"
-            required
-            onChange={(e) => setConfirm(e.target.value)}
-          />
-        </Field>
+        <PasswordField
+          label={t('confirm')}
+          language={language}
+          value={confirm}
+          placeholder={t('confirm')}
+          autoComplete="new-password"
+          onChange={setConfirm}
+        />
 
-        <button type="submit" disabled={busy}>
+        <button type="submit" className="auth__primary" disabled={busy}>
           {busy ? t('working') : t('submit')}
         </button>
       </form>

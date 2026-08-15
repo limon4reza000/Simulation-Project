@@ -120,14 +120,14 @@ describe('student login', () => {
     stubFetch({ loginResult: STUDENT })
     renderAt('/login/student', <LoginPage variant="student" language="EN" />)
 
-    await screen.findByText('Student login')
-    fireEvent.change(screen.getByLabelText('Email'), {
+    await screen.findByText('Student sign in')
+    fireEvent.change(screen.getByLabelText('Email Address'), {
       target: { value: 'student@example.local' },
     })
     fireEvent.change(screen.getByLabelText('Password'), {
       target: { value: 'ChangeMe!123' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Log In' }))
 
     expect(await screen.findByText('STUDENT DASHBOARD')).toBeDefined()
   })
@@ -142,14 +142,14 @@ describe('student login', () => {
     })
     renderAt('/login/student', <LoginPage variant="student" language="EN" />)
 
-    await screen.findByText('Student login')
-    fireEvent.change(screen.getByLabelText('Email'), {
+    await screen.findByText('Student sign in')
+    fireEvent.change(screen.getByLabelText('Email Address'), {
       target: { value: 'nobody@example.local' },
     })
     fireEvent.change(screen.getByLabelText('Password'), {
       target: { value: 'wrong-password' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Log In' }))
 
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toContain('Incorrect email or password')
@@ -159,10 +159,10 @@ describe('student login', () => {
   it('sends credentials so the session cookie is set', async () => {
     const fetchMock = stubFetch({ loginResult: STUDENT })
     renderAt('/login/student', <LoginPage variant="student" language="EN" />)
-    await screen.findByText('Student login')
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@b.co' } })
+    await screen.findByText('Student sign in')
+    fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'a@b.co' } })
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'pw123456' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Log In' }))
 
     await waitFor(() => {
       const loginCall = fetchMock.mock.calls.find((c) =>
@@ -178,14 +178,14 @@ describe('teacher login', () => {
     stubFetch({ loginResult: TEACHER })
     renderAt('/login/teacher', <LoginPage variant="teacher" language="EN" />)
 
-    await screen.findByText('Teacher login')
-    fireEvent.change(screen.getByLabelText('Email'), {
+    await screen.findByText('Teacher sign in')
+    fireEvent.change(screen.getByLabelText('Email Address'), {
       target: { value: 'teacher@example.local' },
     })
     fireEvent.change(screen.getByLabelText('Password'), {
       target: { value: 'ChangeMe!123' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Log In' }))
 
     expect(await screen.findByText('TEACHER DASHBOARD')).toBeDefined()
   })
@@ -195,10 +195,10 @@ describe('teacher login', () => {
     stubFetch({ loginResult: TEACHER })
     renderAt('/login/student', <LoginPage variant="student" language="EN" />)
 
-    await screen.findByText('Student login')
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@b.co' } })
+    await screen.findByText('Student sign in')
+    fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'a@b.co' } })
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'pw123456' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Log In' }))
 
     expect(await screen.findByText('TEACHER DASHBOARD')).toBeDefined()
   })
@@ -209,7 +209,7 @@ describe('student registration', () => {
     fireEvent.change(screen.getByLabelText('Full name'), {
       target: { value: 'Limon Reza' },
     })
-    fireEvent.change(screen.getByLabelText('Email'), {
+    fireEvent.change(screen.getByLabelText('Email Address'), {
       target: { value: 'limon@example.local' },
     })
     fireEvent.change(screen.getByLabelText('Password'), {
@@ -223,7 +223,7 @@ describe('student registration', () => {
   it('offers classes 6 to 10 from the server', async () => {
     stubFetch()
     renderAt('/register/student', <StudentRegisterPage language="EN" />)
-    await screen.findByText('Student registration')
+    await screen.findByText('Student sign up')
 
     await waitFor(() => {
       expect(screen.getByRole('option', { name: 'Class 6' })).toBeDefined()
@@ -235,12 +235,12 @@ describe('student registration', () => {
   it('submits the chosen class and lands on the student dashboard', async () => {
     stubFetch({ registerResult: { ...STUDENT, classLevel: 9 } })
     renderAt('/register/student', <StudentRegisterPage language="EN" />)
-    await screen.findByText('Student registration')
+    await screen.findByText('Student sign up')
     await waitFor(() => screen.getByRole('option', { name: 'Class 9' }))
 
     await fillBase()
     fireEvent.change(screen.getByLabelText('Class'), { target: { value: '9' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }))
 
     expect(await screen.findByText('STUDENT DASHBOARD')).toBeDefined()
     const call = calls.find((c) => c.url.includes('/auth/register/student'))
@@ -250,12 +250,12 @@ describe('student registration', () => {
   it('never sends a role field the server could trust', async () => {
     stubFetch({ registerResult: STUDENT })
     renderAt('/register/student', <StudentRegisterPage language="EN" />)
-    await screen.findByText('Student registration')
+    await screen.findByText('Student sign up')
     await waitFor(() => screen.getByRole('option', { name: 'Class 9' }))
 
     await fillBase()
     fireEvent.change(screen.getByLabelText('Class'), { target: { value: '9' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }))
 
     await waitFor(() => {
       const call = calls.find((c) => c.url.includes('/auth/register/student'))
@@ -272,18 +272,18 @@ describe('student registration', () => {
   it('refuses to submit without a class', async () => {
     stubFetch()
     renderAt('/register/student', <StudentRegisterPage language="EN" />)
-    await screen.findByText('Student registration')
+    await screen.findByText('Student sign up')
     await fillBase()
 
     // The select is `required`, so the browser blocks submission before any of
     // our code runs. Asserting on an error message would therefore be testing
     // a path real users never reach; what matters is that nothing is sent and
     // the student stays on the form.
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }))
     await new Promise((r) => setTimeout(r, 50))
 
     expect(calls.some((c) => c.url.includes('/auth/register/student'))).toBe(false)
-    expect(screen.getByText('Student registration')).toBeDefined()
+    expect(screen.getByText('Student sign up')).toBeDefined()
     expect(screen.queryByText('STUDENT DASHBOARD')).toBeNull()
   })
 
@@ -298,7 +298,7 @@ describe('student registration', () => {
   it('refuses to submit when the passwords differ', async () => {
     stubFetch()
     renderAt('/register/student', <StudentRegisterPage language="EN" />)
-    await screen.findByText('Student registration')
+    await screen.findByText('Student sign up')
     await waitFor(() => screen.getByRole('option', { name: 'Class 9' }))
 
     await fillBase()
@@ -306,7 +306,7 @@ describe('student registration', () => {
     fireEvent.change(screen.getByLabelText('Confirm password'), {
       target: { value: 'something-else' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }))
 
     await waitFor(() => {
       expect(screen.getByRole('alert').textContent).toContain('Passwords do not match')
@@ -323,12 +323,12 @@ describe('student registration', () => {
       },
     })
     renderAt('/register/student', <StudentRegisterPage language="EN" />)
-    await screen.findByText('Student registration')
+    await screen.findByText('Student sign up')
     await waitFor(() => screen.getByRole('option', { name: 'Class 9' }))
 
     await fillBase()
     fireEvent.change(screen.getByLabelText('Class'), { target: { value: '9' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }))
 
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toContain('An account with that email already exists')
@@ -339,12 +339,12 @@ describe('teacher registration', () => {
   it('creates a teacher and lands on the teacher dashboard', async () => {
     stubFetch({ registerResult: TEACHER })
     renderAt('/register/teacher', <TeacherRegisterPage language="EN" />)
-    await screen.findByText('Teacher registration')
+    await screen.findByText('Teacher sign up')
 
     fireEvent.change(screen.getByLabelText('Full name'), {
       target: { value: 'Rashid Sir' },
     })
-    fireEvent.change(screen.getByLabelText('Email'), {
+    fireEvent.change(screen.getByLabelText('Email Address'), {
       target: { value: 'rashid@example.local' },
     })
     fireEvent.change(screen.getByLabelText('Password'), {
@@ -353,7 +353,7 @@ describe('teacher registration', () => {
     fireEvent.change(screen.getByLabelText('Confirm password'), {
       target: { value: 'ChangeMe!123' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }))
 
     expect(await screen.findByText('TEACHER DASHBOARD')).toBeDefined()
     const call = calls.find((c) => c.url.includes('/auth/register/teacher'))
@@ -363,7 +363,7 @@ describe('teacher registration', () => {
   it('has no class field — a teacher is not enrolled in one', async () => {
     stubFetch()
     renderAt('/register/teacher', <TeacherRegisterPage language="EN" />)
-    await screen.findByText('Teacher registration')
+    await screen.findByText('Teacher sign up')
     expect(screen.queryByLabelText('Class')).toBeNull()
   })
 })

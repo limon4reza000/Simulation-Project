@@ -1,146 +1,288 @@
-import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import AuthIllustration from './AuthIllustration'
+import { useState, type ReactNode } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import {
+  BackIcon,
+  EyeIcon,
+  EyeOffIcon,
+  LockIcon,
+  FacebookMark,
+  GoogleMark,
+  AppleMark,
+  MicrosoftMark,
+} from './AuthIcons'
 import type { Language } from '../../registry/types'
+import './auth.css'
 
 /**
- * Shell for the four authentication pages.
+ * Shell for the four authentication screens.
  *
- * A split card: a branded panel carrying the form, and a light panel carrying
- * the illustration. The divider is an SVG curve rather than a straight edge,
- * which is what gives the composition its shape at any width — a CSS
- * border-radius cannot make that sweep.
- *
- * The illustration panel is decorative, so it is the first thing dropped on
- * narrow screens: a student on a phone gets the form, full width, with no
- * horizontal scrolling and nothing important hidden.
+ * A single centred column on a soft gradient: back button, centred heading,
+ * icon-led fields, one primary action. The layout is mobile-first and simply
+ * stays centred on wider screens rather than stretching, because a login form
+ * gains nothing from being 1200px wide.
  */
 
 interface Props {
+  /**
+   * Small role chip above the heading.
+   *
+   * The design gives both roles the same heading ("Welcome Back"), which on a
+   * platform with separate student and teacher pages leaves you unable to tell
+   * which one you are on. This restores that without disturbing the layout.
+   */
+  eyebrow?: string
   title: string
   subtitle?: string
-  brandLine: string
   children: ReactNode
-  footer?: ReactNode
   error?: string | null
-  /** Registration forms are taller and need the roomier column. */
-  wide?: boolean
+  /** Rendered under the primary button: the "already have an account" line. */
+  switchLine?: ReactNode
+  language?: Language
+  /** Where the back arrow goes. Defaults to the student login. */
+  backTo?: string
 }
 
 export function AuthLayout({
+  eyebrow,
   title,
   subtitle,
-  brandLine,
   children,
-  footer,
   error,
-  wide = false,
+  switchLine,
+  language = 'BN',
+  backTo,
 }: Props) {
+  const navigate = useNavigate()
+
   return (
-    <div className="authpage">
-      {/* Decorative dot grids, purely atmospheric. */}
-      <span className="authdots authdots--tr" aria-hidden="true" />
-      <span className="authdots authdots--bl" aria-hidden="true" />
+    <div className="auth">
+      <div className="auth__sheet">
+        <button
+          type="button"
+          className="auth__back"
+          aria-label={language === 'BN' ? 'পিছনে যাও' : 'Go back'}
+          onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
+        >
+          <BackIcon className="auth__backIcon" />
+        </button>
 
-      <div className={`authcard ${wide ? 'is-wide' : ''}`}>
-        <section className="authcard__panel">
-          {/* The curve lives behind the content and bleeds past the panel edge
-              so it still reads as a sweep when the card is narrow.
-              It deliberately keeps its width at the bottom: an earlier version
-              tapered to nothing and the footer links spilled onto the white
-              half of the card. */}
-          <svg
-            className="authcard__curve"
-            viewBox="0 0 200 600"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient id="authCurveG" x1="0" y1="0" x2="0.6" y2="1">
-                <stop offset="0" stopColor="var(--auth-brand-top)" />
-                <stop offset="1" stopColor="var(--auth-brand-bottom)" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M0 0 H152 C 126 150, 208 300, 158 442 C 140 522, 146 566, 144 600 H0 Z"
-              fill="url(#authCurveG)"
-            />
-          </svg>
+        <header className="auth__head">
+          {eyebrow && <p className="auth__eyebrow">{eyebrow}</p>}
+          <h1 className="auth__title">{title}</h1>
+          {subtitle && <p className="auth__subtitle">{subtitle}</p>}
+        </header>
 
-          <div className="authcard__content">
-            <p className="authcard__brand">{brandLine}</p>
-            <h1 className="authcard__title">{title}</h1>
-            {subtitle && <p className="authcard__subtitle">{subtitle}</p>}
+        {error && (
+          <p className="auth__error" role="alert">
+            {error}
+          </p>
+        )}
 
-            {error && (
-              <p className="authcard__error" role="alert">
-                {error}
-              </p>
-            )}
+        {children}
 
-            {children}
+        {switchLine && <p className="auth__switch">{switchLine}</p>}
 
-            {footer && <div className="authcard__footer">{footer}</div>}
-          </div>
-        </section>
+        <SocialRow language={language} />
 
-        <aside className="authart" aria-hidden="true">
-          <AuthIllustration />
-        </aside>
+        <AuthLegal language={language} />
       </div>
     </div>
   )
 }
 
+/**
+ * Field with a leading icon and a visually hidden label.
+ *
+ * The label is hidden, not omitted: the placeholder carries it visually, while
+ * assistive technology still gets a proper name for the control. A placeholder
+ * alone would leave the input unnamed.
+ */
 export function Field({
   label,
+  icon,
   children,
   hint,
-  hideLabel = false,
+  trailing,
 }: {
   label: string
+  icon: ReactNode
   children: ReactNode
   hint?: string
-  /**
-   * Visually hides the label while keeping it for assistive technology.
-   *
-   * Used on the two-field login, where a placeholder is unambiguous. NOT used
-   * on registration: with five fields, a placeholder that vanishes the moment
-   * you type is a genuinely bad experience, and looking pretty is not worth
-   * making someone guess what they already filled in.
-   */
-  hideLabel?: boolean
+  /** Decorative adornment on the right, e.g. a select's chevron. */
+  trailing?: ReactNode
 }) {
   return (
-    <div className="authfield">
-      <label className={`authfield__label ${hideLabel ? 'is-hidden' : ''}`}>
-        <span>{label}</span>
-        {children}
+    <div className="auth__field">
+      <label className="auth__label">
+        <span className="auth__labelText">{label}</span>
+        <span className="auth__control">
+          <span className="auth__icon">{icon}</span>
+          {children}
+          {trailing && (
+            <span className="auth__trailing" aria-hidden="true">
+              {trailing}
+            </span>
+          )}
+        </span>
       </label>
-      {hint && <span className="authfield__hint">{hint}</span>}
+      {hint && <span className="auth__hint">{hint}</span>}
     </div>
   )
 }
 
-export function AuthSwitch({
-  language,
-  to,
-  labelBn,
-  labelEn,
-  lead,
+/**
+ * Password field with a reveal toggle.
+ *
+ * The toggle is a real button with a changing accessible name, so it is
+ * reachable by keyboard and announced correctly — an icon that only responds to
+ * a mouse would lock out anyone typing a long password they cannot check.
+ */
+export function PasswordField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  autoComplete = 'current-password',
+  language = 'BN',
+  minLength,
+  hint,
 }: {
-  language: Language
-  to: string
-  labelBn: string
-  labelEn: string
-  lead?: string
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+  autoComplete?: string
+  language?: Language
+  minLength?: number
+  hint?: string
 }) {
+  const [visible, setVisible] = useState(false)
+  const show = language === 'BN' ? 'পাসওয়ার্ড দেখাও' : 'Show password'
+  const hide = language === 'BN' ? 'পাসওয়ার্ড লুকাও' : 'Hide password'
+
   return (
-    <p className="authcard__switch">
-      {lead && <span>{lead} </span>}
-      <Link className="authcard__link" to={to}>
-        {language === 'BN' ? labelBn : labelEn}
-      </Link>
+    <div className="auth__field">
+      <label className="auth__label">
+        <span className="auth__labelText">{label}</span>
+        <span className="auth__control">
+          <span className="auth__icon">
+            <LockIcon />
+          </span>
+          <input
+            type={visible ? 'text' : 'password'}
+            value={value}
+            placeholder={placeholder}
+            autoComplete={autoComplete}
+            required
+            minLength={minLength}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        </span>
+      </label>
+      <button
+        type="button"
+        className="auth__reveal"
+        aria-label={visible ? hide : show}
+        aria-pressed={visible}
+        onClick={() => setVisible((v) => !v)}
+      >
+        {visible ? (
+          <EyeOffIcon className="auth__revealIcon" />
+        ) : (
+          <EyeIcon className="auth__revealIcon" />
+        )}
+      </button>
+      {hint && <span className="auth__hint">{hint}</span>}
+    </div>
+  )
+}
+
+/**
+ * Third-party sign-in.
+ *
+ * These providers are NOT connected — there is no OAuth client, no redirect
+ * handler and no account-linking model. They are rendered because the design
+ * calls for them, but each says so plainly when pressed rather than failing
+ * silently. A button that looks like it works and does nothing is worse than
+ * one that explains itself.
+ */
+function SocialRow({ language }: { language: Language }) {
+  const [notice, setNotice] = useState<string | null>(null)
+
+  const providers = [
+    { key: 'Facebook', mark: <FacebookMark className="auth__socialMark" /> },
+    { key: 'Google', mark: <GoogleMark className="auth__socialMark" /> },
+    { key: 'Apple', mark: <AppleMark className="auth__socialMark" /> },
+    { key: 'Microsoft', mark: <MicrosoftMark className="auth__socialMark" /> },
+  ]
+
+  const unavailable = (name: string) =>
+    language === 'BN'
+      ? `${name} দিয়ে লগইন এখনো চালু হয়নি — ইমেইল ব্যবহার করো।`
+      : `${name} sign-in is not available yet — please use email.`
+
+  return (
+    <div className="auth__social">
+      <div className="auth__or">
+        <span>{language === 'BN' ? 'অথবা' : 'or'}</span>
+      </div>
+
+      <div className="auth__socialRow">
+        {providers.map((p) => (
+          <button
+            key={p.key}
+            type="button"
+            className="auth__socialBtn"
+            aria-label={
+              language === 'BN'
+                ? `${p.key} দিয়ে চালিয়ে যাও (এখনো চালু হয়নি)`
+                : `Continue with ${p.key} (not available yet)`
+            }
+            onClick={() => setNotice(unavailable(p.key))}
+          >
+            {p.mark}
+          </button>
+        ))}
+      </div>
+
+      {notice && (
+        <p className="auth__notice" role="status">
+          {notice}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Legal line.
+ *
+ * Plain text, not links: there are no Terms or Privacy pages yet, and linking
+ * to nothing on the screen where someone agrees to them is the worst place to
+ * do it. Turn these into links the moment the documents exist.
+ */
+function AuthLegal({ language }: { language: Language }) {
+  return (
+    <p className="auth__legal">
+      {language === 'BN' ? (
+        <>
+          এই প্ল্যাটফর্ম ব্যবহার করলে তুমি আমাদের{' '}
+          <strong>শর্তাবলি</strong> ও <strong>গোপনীয়তা নীতি</strong> মেনে নিচ্ছ।
+        </>
+      ) : (
+        <>
+          By continuing you agree to our <strong>Terms of Service</strong> and{' '}
+          <strong>Privacy Policy</strong>.
+        </>
+      )}
     </p>
+  )
+}
+
+export function AuthLink({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Link className="auth__link" to={to}>
+      {children}
+    </Link>
   )
 }

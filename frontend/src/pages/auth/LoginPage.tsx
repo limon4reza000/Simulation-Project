@@ -2,7 +2,8 @@ import { useCallback, useState, type FormEvent } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { login, ApiError } from '../../lib/api'
 import { useAuth, homeRouteFor } from '../../auth/AuthContext'
-import { AuthLayout, Field, AuthSwitch } from './AuthLayout'
+import { AuthLayout, Field, PasswordField, AuthLink } from './AuthLayout'
+import { MailIcon } from './AuthIcons'
 import type { Language } from '../../registry/types'
 
 /**
@@ -17,38 +18,45 @@ import type { Language } from '../../registry/types'
 
 const COPY = {
   student: {
-    title: { bn: 'শিক্ষার্থী লগইন', en: 'Student login' },
+    eyebrow: { bn: 'শিক্ষার্থী লগইন', en: 'Student sign in' },
+    title: { bn: 'আবার স্বাগতম', en: 'Welcome Back' },
     subtitle: {
-      bn: 'তোমার অ্যাকাউন্টে প্রবেশ করে পড়া শুরু করো',
-      en: 'Sign in to continue learning',
+      bn: 'ইমেইল দিয়ে প্রবেশ করে তোমার পাঠ, অনুশীলন ও অগ্রগতি দেখো।',
+      en: 'Sign in with your email to reach your lessons, practice and progress.',
     },
     registerTo: '/register/student',
-    registerLabel: { bn: 'রেজিস্ট্রেশন করো', en: 'Create your account' },
+    registerLabel: { bn: 'সাইন আপ', en: 'Sign Up' },
+    prompt: { bn: 'অ্যাকাউন্ট নেই?', en: "Don't have an account?" },
     otherTo: '/login/teacher',
-    otherLabel: { bn: 'আপনি কি শিক্ষক?', en: 'Are you a teacher?' },
+    otherLabel: { bn: 'শিক্ষক হিসেবে প্রবেশ করুন', en: 'Sign in as a teacher' },
   },
   teacher: {
-    title: { bn: 'শিক্ষক লগইন', en: 'Teacher login' },
+    eyebrow: { bn: 'শিক্ষক লগইন', en: 'Teacher sign in' },
+    title: { bn: 'আবার স্বাগতম', en: 'Welcome Back' },
     subtitle: {
-      bn: 'আপনার ক্লাস ও শিক্ষার্থীদের দেখতে প্রবেশ করুন',
-      en: 'Sign in to see your classes and students',
+      bn: 'ইমেইল দিয়ে প্রবেশ করে আপনার ক্লাস ও শিক্ষার্থীদের দেখুন।',
+      en: 'Sign in with your email to see your classes and students.',
     },
     registerTo: '/register/teacher',
-    registerLabel: { bn: 'রেজিস্ট্রেশন করুন', en: 'Create your account' },
+    registerLabel: { bn: 'সাইন আপ', en: 'Sign Up' },
+    prompt: { bn: 'অ্যাকাউন্ট নেই?', en: "Don't have an account?" },
     otherTo: '/login/student',
-    otherLabel: { bn: 'আপনি কি শিক্ষার্থী?', en: 'Are you a student?' },
+    otherLabel: { bn: 'শিক্ষার্থী হিসেবে প্রবেশ করো', en: 'Sign in as a student' },
   },
 } as const
 
 const FORM = {
-  email: { bn: 'ইমেইল', en: 'Email' },
+  email: { bn: 'ইমেইল', en: 'Email Address' },
   password: { bn: 'পাসওয়ার্ড', en: 'Password' },
-  submit: { bn: 'প্রবেশ করো', en: 'Sign in' },
+  submit: { bn: 'লগ ইন', en: 'Log In' },
   working: { bn: 'অপেক্ষা করো…', en: 'Signing in…' },
   offline: { bn: 'সার্ভারে পৌঁছানো যাচ্ছে না।', en: 'Could not reach the server.' },
   remember: { bn: 'আমাকে মনে রেখো', en: 'Remember me' },
-  brand: { bn: 'সিমুলেশন ল্যাব', en: 'SIMULATION LAB' },
-  noAccount: { bn: 'অ্যাকাউন্ট নেই?', en: "Don't have an account?" },
+  forgot: { bn: 'পাসওয়ার্ড ভুলে গেছ?', en: 'Forgot Password' },
+  forgotHelp: {
+    bn: 'পাসওয়ার্ড রিসেট এখনো চালু হয়নি। তোমার শিক্ষক বা প্রশাসকের সাথে যোগাযোগ করো।',
+    en: 'Password reset is not available yet. Please ask your teacher or an administrator.',
+  },
 } as const
 
 interface Props {
@@ -71,6 +79,7 @@ export default function LoginPage({ variant, language = 'BN' }: Props) {
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [forgotNotice, setForgotNotice] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   const onSubmit = useCallback(
@@ -96,30 +105,23 @@ export default function LoginPage({ variant, language = 'BN' }: Props) {
 
   return (
     <AuthLayout
-      brandLine={c(FORM.brand)}
+      language={language}
+      backTo={copy.otherTo}
+      eyebrow={c(copy.eyebrow)}
       title={c(copy.title)}
       subtitle={c(copy.subtitle)}
       error={error}
-      footer={
+      switchLine={
         <>
-          <AuthSwitch
-            language={language}
-            lead={c(FORM.noAccount)}
-            to={copy.registerTo}
-            labelBn={copy.registerLabel.bn}
-            labelEn={copy.registerLabel.en}
-          />
-          <AuthSwitch
-            language={language}
-            to={copy.otherTo}
-            labelBn={copy.otherLabel.bn}
-            labelEn={copy.otherLabel.en}
-          />
+          {c(copy.prompt)}{' '}
+          <AuthLink to={copy.registerTo}>{c(copy.registerLabel)}</AuthLink>
+          <br />
+          <AuthLink to={copy.otherTo}>{c(copy.otherLabel)}</AuthLink>
         </>
       }
     >
-      <form onSubmit={onSubmit} className="authform">
-        <Field label={t('email')} hideLabel>
+      <form onSubmit={onSubmit} className="auth__form">
+        <Field label={t('email')} icon={<MailIcon />}>
           <input
             type="email"
             value={email}
@@ -130,28 +132,49 @@ export default function LoginPage({ variant, language = 'BN' }: Props) {
           />
         </Field>
 
-        <Field label={t('password')} hideLabel>
-          <input
-            type="password"
-            value={password}
-            placeholder={t('password')}
-            autoComplete="current-password"
-            required
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
+        <PasswordField
+          label={t('password')}
+          language={language}
+          value={password}
+          placeholder={t('password')}
+          onChange={setPassword}
+        />
 
-        {/* Backed by a real, longer session lifetime — not decoration. */}
-        <label className="authremember">
-          <input
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-          />
-          <span>{t('remember')}</span>
-        </label>
+        <div className="auth__row">
+          {/* Backed by a real, longer session lifetime — not decoration. */}
+          <label className="auth__remember">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+            <span>{t('remember')}</span>
+          </label>
 
-        <button type="submit" disabled={busy || !email || !password}>
+          {/*
+            No reset flow exists. Rather than a link to nowhere, this states
+            what someone locked out can actually do today.
+          */}
+          <button
+            type="button"
+            className="auth__forgot"
+            onClick={() => setForgotNotice(t('forgotHelp'))}
+          >
+            {t('forgot')}
+          </button>
+        </div>
+
+        {forgotNotice && (
+          <p className="auth__notice" role="status">
+            {forgotNotice}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          className="auth__primary"
+          disabled={busy || !email || !password}
+        >
           {busy ? t('working') : t('submit')}
         </button>
       </form>
