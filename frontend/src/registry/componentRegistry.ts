@@ -11,6 +11,10 @@ import Collision from '../components/dynamics/Collision'
 import NewtonsSecondLaw from '../components/dynamics/NewtonsSecondLaw'
 import FrictionIncline from '../components/dynamics/FrictionIncline'
 import ForceBalance from '../components/dynamics/ForceBalance'
+import Work from '../components/energy/Work'
+import EnergyConversion from '../components/energy/EnergyConversion'
+import PendulumEnergy from '../components/energy/PendulumEnergy'
+import PowerEfficiency from '../components/energy/PowerEfficiency'
 import type { Renderer } from './types'
 
 /**
@@ -39,6 +43,10 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_NEWTONS_SECOND_LAW: NewtonsSecondLaw as unknown as Renderer,
   SIM_FRICTION_INCLINE: FrictionIncline as unknown as Renderer,
   VIZ_FORCE_BALANCE: ForceBalance as unknown as Renderer,
+  SIM_WORK: Work as unknown as Renderer,
+  SIM_ENERGY_CONVERSION: EnergyConversion as unknown as Renderer,
+  SIM_PENDULUM_ENERGY: PendulumEnergy as unknown as Renderer,
+  SIM_POWER_EFFICIENCY: PowerEfficiency as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {

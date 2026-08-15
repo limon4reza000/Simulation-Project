@@ -2,18 +2,18 @@
 
 An interactive learning platform for Bangladeshi secondary students, built on
 NCTB curriculum content. First vertical slice: **Physics, Class 9–10**,
-Chapters 1–3 (complete) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল.
+Chapters 1–4 (complete) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি.
 
 ## Status
 
-349 tests passing (137 backend, 212 frontend), plus live-database and
+392 tests passing (137 backend, 255 frontend), plus live-database and
 browser-driven verification for every renderer.
 
 | Area | State |
 |---|---|
 | Database schema | Migrated and verified against MySQL 8.4.9; all CHECK constraints proven to enforce |
-| Seed | Chapters 1–3, each idempotent and independently re-runnable |
-| Renderers | 13 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance — each with pure-logic tests checked against the book's own equations or printed figures |
+| Seed | Chapters 1–4, each idempotent and independently re-runnable |
+| Renderers | 17 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency — each with pure-logic tests checked against the book's own equations or printed figures |
 | Component registry | The architectural core: adding an artefact is one component + one registry line |
 | API layer | Catalog, lesson, activity, quiz, progress, auth, registration, teacher-roster and admin-assignment endpoints |
 | Auth | Separate student/teacher login and registration; session cookies, scrypt passwords, role enforced server-side |
@@ -37,6 +37,7 @@ backend/
   scripts/
     seedChapter2.ts            additive, per-lesson idempotent — see its header
     seedChapter3.ts            same pattern, for Chapter 3
+    seedChapter4.ts            same pattern, for Chapter 4
 frontend/
   src/
     lib/instruments/           Chapter 1 instrument logic — no React, fully tested
@@ -45,6 +46,8 @@ frontend/
                                 plane, path geometry, motion grapher
     lib/dynamics/               Chapter 3 dynamics logic — collision, Newton's
                                 second law, friction incline, force balance
+    lib/energy/                 Chapter 4 energy logic — work, kinetic/potential
+                                energy conversion, pendulum energy, power/efficiency
     components/instruments/    VernierCaliper, ScrewGauge (SVG)
     components/measurement/    ErrorPropagationLab
     components/viz/            LogScaleExplorer
@@ -52,6 +55,8 @@ frontend/
                                 MotionGrapher
     components/dynamics/       Collision, NewtonsSecondLaw, FrictionIncline,
                                 ForceBalance
+    components/energy/         Work, EnergyConversion, PendulumEnergy,
+                                PowerEfficiency
     registry/                  the component registry — the load-bearing abstraction
     data/chapter01.ts          fixtures standing in for the API
 docs/
@@ -59,6 +64,7 @@ docs/
   content/physics-9-10-chapter-01.md content plan traced to book pages
   content/physics-9-10-chapter-02.md same, for Chapter 2
   content/physics-9-10-chapter-03.md same, for Chapter 3
+  content/physics-9-10-chapter-04.md same, for Chapter 4
   content/textbook-issues.md         printing defects found in the source book
 ```
 
@@ -70,7 +76,7 @@ docs/
 cd frontend
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 212 tests
+npm test         # 255 tests
 npm run build
 ```
 
@@ -350,4 +356,9 @@ a deployed environment.
     pinned to a numbered section heading — confirm before seeding
 11. Chapter 3's নমুনা প্রশ্ন MCQs (p. 94+) are not yet digitised into
     `Question` rows
-12. Chapter 4 has not yet been identified or read from the source PDF
+12. Chapter 4 Tier 2 (optional): a renewable/non-renewable energy-source
+    gallery (§৪.৪), an energy-conversion chain diagram (§৪.৫.২), and a
+    qualitative nuclear-fission diagram (§৪.৬)
+13. Chapter 4's নমুনা প্রশ্ন MCQs (p. 123+) are not yet digitised into
+    `Question` rows
+14. Chapter 5 has not yet been identified or read from the source PDF

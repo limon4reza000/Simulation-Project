@@ -29,7 +29,7 @@ interface Props {
 }
 
 export default function StudentDashboard({ language, onLanguageChange }: Props) {
-  const { source, index, chapterId, loadLesson } = useLessonSource()
+  const { source, index, chapterId, chapterHeading, loadLesson } = useLessonSource()
   // Session state is owned by AuthProvider; this page only reads it.
   const { user, signOut } = useAuth()
   const [lessonId, setLessonId] = useState<number | null>(null)
@@ -137,14 +137,16 @@ export default function StudentDashboard({ language, onLanguageChange }: Props) 
       <header className="app__header">
         <div>
           <p className="app__eyebrow">
-            {language === 'BN'
-              ? 'পদার্থবিজ্ঞান — ৯ম-১০ম শ্রেণি — প্রথম অধ্যায়'
-              : 'Physics — Class 9–10 — Chapter 1'}
+            {language === 'BN' ? 'পদার্থবিজ্ঞান — ৯ম-১০ম শ্রেণি' : 'Physics — Class 9–10'}
           </p>
           <h1 className="app__title">
-            {language === 'BN'
-              ? 'ভৌত রাশি এবং তাদের পরিমাপ'
-              : 'Physical Quantities and Their Measurement'}
+            {chapterHeading
+              ? language === 'BN'
+                ? chapterHeading.titleBn
+                : chapterHeading.titleEn
+              : language === 'BN'
+                ? 'ভৌত রাশি এবং তাদের পরিমাপ'
+                : 'Physical Quantities and Their Measurement'}
           </h1>
           <p className={`app__source is-${source}`}>
             {source === 'loading'

@@ -27,10 +27,16 @@ export interface LessonIndexEntry {
   titleEn: string
 }
 
+export interface ChapterHeading {
+  titleBn: string
+  titleEn: string
+}
+
 export function useLessonSource() {
   const [source, setSource] = useState<LessonSource>('loading')
   const [index, setIndex] = useState<LessonIndexEntry[]>([])
   const [chapterId, setChapterId] = useState<number | null>(null)
+  const [chapterHeading, setChapterHeading] = useState<ChapterHeading | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -81,6 +87,7 @@ export function useLessonSource() {
         setSource('api')
         setIndex(lessons)
         setChapterId(chapter.id)
+        setChapterHeading({ titleBn: chapter.titleBn, titleEn: chapter.titleEn })
       } catch {
         // The API answered health but the catalog is empty or broken — most
         // likely the seed has not been run. Fixtures keep the UI usable.
@@ -115,7 +122,7 @@ export function useLessonSource() {
     [source],
   )
 
-  return { source, index, chapterId, loadLesson }
+  return { source, index, chapterId, chapterHeading, loadLesson }
 }
 
 /**
