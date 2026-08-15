@@ -36,6 +36,7 @@ describe('component registry', () => {
   it('exposes the registered artefacts', () => {
     expect(Object.keys(componentRegistry).sort()).toEqual([
       'QUIZ_RUNNER',
+      'SIM_COLLISION',
       'SIM_ERROR_PROPAGATION',
       'SIM_FREE_FALL',
       'SIM_INCLINED_PLANE',

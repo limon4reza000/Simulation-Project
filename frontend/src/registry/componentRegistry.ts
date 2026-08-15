@@ -7,6 +7,7 @@ import FreeFall from '../components/kinematics/FreeFall'
 import InclinedPlane from '../components/kinematics/InclinedPlane'
 import DistanceDisplacement from '../components/kinematics/DistanceDisplacement'
 import MotionGrapher from '../components/kinematics/MotionGrapher'
+import Collision from '../components/dynamics/Collision'
 import type { Renderer } from './types'
 
 /**
@@ -31,6 +32,7 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_INCLINED_PLANE: InclinedPlane as unknown as Renderer,
   VIZ_DISTANCE_DISPLACEMENT: DistanceDisplacement as unknown as Renderer,
   VIZ_MOTION_GRAPHER: MotionGrapher as unknown as Renderer,
+  SIM_COLLISION: Collision as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {
