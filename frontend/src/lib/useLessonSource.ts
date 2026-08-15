@@ -53,7 +53,12 @@ export function useLessonSource() {
 
       try {
         const classes = await fetchClasses(controller.signal)
-        const subject = classes[0]?.subjects[0]
+        // Not classes[0]: with classes 6-10 all enrollable and only 9-10
+        // carrying Physics, the first class by level is frequently one with no
+        // subjects at all, which silently dropped the app to fixtures for
+        // every real student. Find the first class that actually has a
+        // subject instead of assuming the lowest level does.
+        const subject = classes.flatMap((c) => c.subjects)[0]
         if (!subject) throw new Error('no published subject')
 
         const chapters = await fetchChapters(subject.id, controller.signal)
