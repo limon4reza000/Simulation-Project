@@ -23,6 +23,10 @@ import TemperatureScales from '../components/heat/TemperatureScales'
 import ThermalExpansion from '../components/heat/ThermalExpansion'
 import HeatingCurve from '../components/heat/HeatingCurve'
 import CalorimetryLab from '../components/heat/CalorimetryLab'
+import PendulumPeriod from '../components/waves/PendulumPeriod'
+import WaveProperties from '../components/waves/WaveProperties'
+import SoundSpeed from '../components/waves/SoundSpeed'
+import Echo from '../components/waves/Echo'
 import type { Renderer } from './types'
 
 /**
@@ -63,6 +67,10 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_THERMAL_EXPANSION: ThermalExpansion as unknown as Renderer,
   SIM_HEATING_CURVE: HeatingCurve as unknown as Renderer,
   SIM_CALORIMETRY: CalorimetryLab as unknown as Renderer,
+  SIM_PENDULUM_PERIOD: PendulumPeriod as unknown as Renderer,
+  SIM_WAVE_PROPERTIES: WaveProperties as unknown as Renderer,
+  SIM_SOUND_SPEED: SoundSpeed as unknown as Renderer,
+  SIM_ECHO: Echo as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {

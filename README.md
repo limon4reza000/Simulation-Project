@@ -2,19 +2,19 @@
 
 An interactive learning platform for Bangladeshi secondary students, built on
 NCTB curriculum content. First vertical slice: **Physics, Class 9–10**,
-Chapters 1–6 (complete) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি,
-পদার্থের অবস্থা ও চাপ, বস্তুর ওপর তাপের প্রভাব.
+Chapters 1–7 (complete) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি,
+পদার্থের অবস্থা ও চাপ, বস্তুর ওপর তাপের প্রভাব, তরঙ্গ ও শব্দ.
 
 ## Status
 
-484 tests passing (137 backend, 347 frontend), plus live-database and
+524 tests passing (137 backend, 387 frontend), plus live-database and
 browser-driven verification for every renderer.
 
 | Area | State |
 |---|---|
 | Database schema | Migrated and verified against MySQL 8.4.9; all CHECK constraints proven to enforce |
-| Seed | Chapters 1–6, each idempotent and independently re-runnable |
-| Renderers | 25 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency, pressure, liquid pressure, Archimedes/buoyancy, Hooke's law, temperature scales, thermal expansion, heating curve, calorimetry — each with pure-logic tests checked against the book's own equations or printed figures |
+| Seed | Chapters 1–7, each idempotent and independently re-runnable |
+| Renderers | 29 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency, pressure, liquid pressure, Archimedes/buoyancy, Hooke's law, temperature scales, thermal expansion, heating curve, calorimetry, pendulum period, wave properties, sound speed, echo — each with pure-logic tests checked against the book's own equations or printed figures |
 | Component registry | The architectural core: adding an artefact is one component + one registry line |
 | API layer | Catalog, lesson, activity, quiz, progress, auth, registration, teacher-roster and admin-assignment endpoints |
 | Auth | Separate student/teacher login and registration; session cookies, scrypt passwords, role enforced server-side |
@@ -41,6 +41,7 @@ backend/
     seedChapter4.ts            same pattern, for Chapter 4
     seedChapter5.ts            same pattern, for Chapter 5
     seedChapter6.ts            same pattern, for Chapter 6
+    seedChapter7.ts            same pattern, for Chapter 7
 frontend/
   src/
     lib/instruments/           Chapter 1 instrument logic — no React, fully tested
@@ -55,6 +56,8 @@ frontend/
                                 liquid pressure, Archimedes/buoyancy, Hooke's law
     lib/heat/                    Chapter 6 heat logic — temperature scales,
                                 thermal expansion, heating curve, calorimetry
+    lib/waves/                   Chapter 7 wave/sound logic — pendulum period,
+                                wave properties, sound speed, echo
     components/instruments/    VernierCaliper, ScrewGauge (SVG)
     components/measurement/    ErrorPropagationLab
     components/viz/            LogScaleExplorer
@@ -67,6 +70,7 @@ frontend/
     components/pressure/       Pressure, LiquidPressure, Archimedes, HookesLaw
     components/heat/           TemperatureScales, ThermalExpansion, HeatingCurve,
                                 CalorimetryLab
+    components/waves/          PendulumPeriod, WaveProperties, SoundSpeed, Echo
     registry/                  the component registry — the load-bearing abstraction
     data/chapter01.ts          fixtures standing in for the API
 docs/
@@ -77,6 +81,7 @@ docs/
   content/physics-9-10-chapter-04.md same, for Chapter 4
   content/physics-9-10-chapter-05.md same, for Chapter 5
   content/physics-9-10-chapter-06.md same, for Chapter 6
+  content/physics-9-10-chapter-07.md same, for Chapter 7
   content/textbook-issues.md         printing defects found in the source book
 ```
 
@@ -88,7 +93,7 @@ docs/
 cd frontend
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 347 tests
+npm test         # 387 tests
 npm run build
 ```
 
@@ -383,4 +388,9 @@ a deployed environment.
     gas-expansion coefficient demo (§৬.৩.৩)
 17. Chapter 6's নমুনা প্রশ্ন MCQs (p. 183+) are not yet digitised into
     `Question` rows
-18. Chapter 7 has not yet been identified or read from the source PDF
+18. Chapter 7 Tier 2 (optional): a transverse/longitudinal wave-type gallery
+    (§৭.২.২), a constructive/destructive superposition demo (§৭.২.১(v)), and
+    a noise-pollution decibel-level comparison (§৭.৩.৫, টেবিল ৭.০২)
+19. Chapter 7's নমুনা প্রশ্ন MCQs (p. 206+) are not yet digitised into
+    `Question` rows
+20. Chapter 8 has not yet been identified or read from the source PDF
