@@ -8,6 +8,9 @@ import InclinedPlane from '../components/kinematics/InclinedPlane'
 import DistanceDisplacement from '../components/kinematics/DistanceDisplacement'
 import MotionGrapher from '../components/kinematics/MotionGrapher'
 import Collision from '../components/dynamics/Collision'
+import NewtonsSecondLaw from '../components/dynamics/NewtonsSecondLaw'
+import FrictionIncline from '../components/dynamics/FrictionIncline'
+import ForceBalance from '../components/dynamics/ForceBalance'
 import type { Renderer } from './types'
 
 /**
@@ -33,6 +36,9 @@ export const componentRegistry: Record<string, Renderer> = {
   VIZ_DISTANCE_DISPLACEMENT: DistanceDisplacement as unknown as Renderer,
   VIZ_MOTION_GRAPHER: MotionGrapher as unknown as Renderer,
   SIM_COLLISION: Collision as unknown as Renderer,
+  SIM_NEWTONS_SECOND_LAW: NewtonsSecondLaw as unknown as Renderer,
+  SIM_FRICTION_INCLINE: FrictionIncline as unknown as Renderer,
+  VIZ_FORCE_BALANCE: ForceBalance as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {

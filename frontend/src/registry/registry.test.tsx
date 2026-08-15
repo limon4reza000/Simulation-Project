@@ -39,10 +39,13 @@ describe('component registry', () => {
       'SIM_COLLISION',
       'SIM_ERROR_PROPAGATION',
       'SIM_FREE_FALL',
+      'SIM_FRICTION_INCLINE',
       'SIM_INCLINED_PLANE',
+      'SIM_NEWTONS_SECOND_LAW',
       'SIM_SCREW_GAUGE',
       'SIM_VERNIER_CALIPER',
       'VIZ_DISTANCE_DISPLACEMENT',
+      'VIZ_FORCE_BALANCE',
       'VIZ_LOG_SCALE_EXPLORER',
       'VIZ_MOTION_GRAPHER',
     ])

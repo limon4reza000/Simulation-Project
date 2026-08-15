@@ -219,6 +219,92 @@ async function main() {
     },
   })
 
+  await ensureLesson({
+    topicOrder: 2,
+    topicTitleBn: 'নিউটনের দ্বিতীয় গতি সূত্র',
+    topicTitleEn: "Newton's Second Law",
+    lessonTitleBn: 'নিউটনের দ্বিতীয় গতি সূত্র',
+    lessonTitleEn: "Newton's Second Law",
+    prosePage: 76,
+    proseBn:
+      'বস্তুর ভরবেগের পরিবর্তনের হার তার উপর প্রযুক্ত বলের সমানুপাতিক — এটাই নিউটনের দ্বিতীয় গতি সূত্র। সমানুপাতিক ধ্রুবক ১ ধরে নিলে সূত্রটি একটি সমীকরণ হিসেবে লেখা যায়: F = ma। অর্থাৎ একই বল বেশি ভরের বস্তুর উপর প্রয়োগ করলে ত্বরণ কম হয়।',
+    makeArtefact: async () => {
+      const sim = await prisma.simulation.create({
+        data: {
+          type: 'SIM_NEWTONS_SECOND_LAW',
+          configuration: { maxForce: 50, maxMass: 20, durationS: 4 },
+          status: ContentStatus.PUBLISHED,
+          parameters: {
+            create: [
+              {
+                name: 'forceN',
+                labelBn: 'বল',
+                labelEn: 'Force',
+                dataType: ParameterDataType.FLOAT,
+                defaultValue: '10',
+                minValue: '0',
+                maxValue: '50',
+              },
+              {
+                name: 'massKg',
+                labelBn: 'ভর',
+                labelEn: 'Mass',
+                dataType: ParameterDataType.FLOAT,
+                defaultValue: '2',
+                minValue: '1',
+                maxValue: '20',
+              },
+            ],
+          },
+        },
+      })
+      return { id: sim.id, isSimulation: true }
+    },
+  })
+
+  await ensureLesson({
+    topicOrder: 3,
+    topicTitleBn: 'স্থিতি ঘর্ষণ সহগ পরিমাপ',
+    topicTitleEn: 'Measuring the Coefficient of Static Friction',
+    lessonTitleBn: 'স্থিতি ঘর্ষণ সহগ পরিমাপ',
+    lessonTitleEn: 'Measuring the Coefficient of Static Friction',
+    prosePage: 91,
+    proseBn:
+      'একটি বইয়ের উপর একটি ম্যাচ বাক্স রেখে বইটি আস্তে আস্তে ঢালু করলে, একটি নির্দিষ্ট কোণে (সংকট কোণ) ম্যাচ বাক্সটি পিছলাতে শুরু করে। সেই কোণেই স্থিতি ঘর্ষণ সহগ μs এর মান হয় tan θc — কারণ ঠিক সেই মুহূর্তে অভিকর্ষজ বলের ঢাল বরাবর উপাংশ সর্বোচ্চ স্থিতি ঘর্ষণ বলের সমান হয়।',
+    makeArtefact: async () => {
+      const sim = await prisma.simulation.create({
+        data: {
+          type: 'SIM_FRICTION_INCLINE',
+          configuration: { staticCoefficient: 0.4, kineticCoefficient: 0.3 },
+          status: ContentStatus.PUBLISHED,
+          parameters: { create: [] },
+        },
+      })
+      return { id: sim.id, isSimulation: true }
+    },
+  })
+
+  await ensureLesson({
+    topicOrder: 4,
+    topicTitleBn: 'বলের সাম্যাবস্থা ও অসাম্যাবস্থা',
+    topicTitleEn: 'Balanced and Unbalanced Forces',
+    lessonTitleBn: 'বলের সাম্যাবস্থা ও অসাম্যাবস্থা',
+    lessonTitleEn: 'Balanced and Unbalanced Forces',
+    prosePage: 69,
+    proseBn:
+      'বল একটি ভেক্টর রাশি। একটি বস্তুর উপর দুই বা ততোধিক বল প্রয়োগ করা হলে সেগুলোর সম্মিলিত লব্ধি যদি শূন্য হয়, তাহলে বস্তুটির ত্বরণ থাকে না — একে সাম্যাবস্থা বলে। লব্ধি শূন্য না হলে সেটি অসাম্যাবস্থা, আর তখন বস্তুটি লব্ধি বলের দিকে ত্বরিত হয়।',
+    makeArtefact: async () => {
+      const viz = await prisma.visualization.create({
+        data: {
+          type: 'VIZ_FORCE_BALANCE',
+          configuration: { forceCount: 3 },
+          status: ContentStatus.PUBLISHED,
+        },
+      })
+      return { id: viz.id, isSimulation: false }
+    },
+  })
+
   console.log('Chapter 3 seeding complete.')
 }
 

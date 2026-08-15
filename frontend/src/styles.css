@@ -815,3 +815,22 @@ body {
   stroke: var(--accent);
   stroke-width: 2;
 }
+
+/* Distinct force-vector strokes for ForceBalance — the fill-based sim__dot /
+   sim__object classes intentionally do not set `color`, so they cannot be
+   used with stroke="currentColor" for a line as they were first tried. */
+.sim__force-a {
+  stroke: var(--accent);
+}
+
+.sim__force-b {
+  stroke: var(--match);
+}
+
+.sim__force-c {
+  stroke: var(--object);
+}
+
+.sim__object.is-weak {
+  opacity: 0.7;
+}
