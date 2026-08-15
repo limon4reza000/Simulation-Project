@@ -12,6 +12,7 @@ import { createQuizRouter } from './routes/quizzes'
 import { createProgressRouter } from './routes/progress'
 import { createRegisterRouter } from './routes/register'
 import { createTeacherRouter } from './routes/teacher'
+import { createAdminRouter } from './routes/admin'
 
 export interface AppOptions {
   prisma: PrismaClient
@@ -61,6 +62,7 @@ export function createApp({
   app.use('/api', createAuthRouter(prisma))
   app.use('/api', createRegisterRouter(prisma))
   app.use('/api', createTeacherRouter(prisma))
+  app.use('/api', createAdminRouter(prisma))
   app.use('/api', createCatalogRouter(prisma))
   app.use('/api', createLessonRouter(prisma))
   app.use('/api', createActivityRouter(prisma))

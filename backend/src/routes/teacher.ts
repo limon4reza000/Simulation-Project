@@ -1,7 +1,9 @@
 import { Router } from 'express'
 import type { PrismaClient } from '@prisma/client'
-import { asyncHandler } from '../lib/errors'
+import { asyncHandler, HttpError } from '../lib/errors'
+import { parseId } from '../lib/http'
 import { requireRole } from '../lib/auth'
+import { getClassRoster } from '../services/roster'
 
 /**
  * Teacher-only routes.
@@ -69,6 +71,29 @@ export function createTeacherRouter(prisma: PrismaClient): Router {
           totalStudents: [...countByClass.values()].reduce((a, b) => a + b, 0),
         },
       })
+    }),
+  )
+
+  router.get(
+    '/teacher/classes/:classId/students',
+    asyncHandler(async (req, res) => {
+      const teacher = requireRole(req, 'TEACHER')
+      const classId = parseId(req.params.classId, 'class')
+
+      const roster = await getClassRoster(prisma, teacher.userId, classId)
+
+      // No assignment covering this class. 403 rather than 404: the class
+      // plainly exists, and pretending otherwise to a signed-in teacher gains
+      // nothing while making a real permissions problem look like a typo.
+      if (!roster) {
+        throw new HttpError(
+          403,
+          'You are not assigned to that class',
+          'NOT_ASSIGNED',
+        )
+      }
+
+      res.json({ data: roster })
     }),
   )
 
