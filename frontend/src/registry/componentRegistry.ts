@@ -4,6 +4,9 @@ import ErrorPropagationLab from '../components/measurement/ErrorPropagationLab'
 import LogScaleExplorer from '../components/viz/LogScaleExplorer'
 import QuizRunner from '../components/assessment/QuizRunner'
 import FreeFall from '../components/kinematics/FreeFall'
+import InclinedPlane from '../components/kinematics/InclinedPlane'
+import DistanceDisplacement from '../components/kinematics/DistanceDisplacement'
+import MotionGrapher from '../components/kinematics/MotionGrapher'
 import type { Renderer } from './types'
 
 /**
@@ -25,6 +28,9 @@ export const componentRegistry: Record<string, Renderer> = {
   VIZ_LOG_SCALE_EXPLORER: LogScaleExplorer as unknown as Renderer,
   QUIZ_RUNNER: QuizRunner as unknown as Renderer,
   SIM_FREE_FALL: FreeFall as unknown as Renderer,
+  SIM_INCLINED_PLANE: InclinedPlane as unknown as Renderer,
+  VIZ_DISTANCE_DISPLACEMENT: DistanceDisplacement as unknown as Renderer,
+  VIZ_MOTION_GRAPHER: MotionGrapher as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {

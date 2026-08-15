@@ -38,9 +38,12 @@ describe('component registry', () => {
       'QUIZ_RUNNER',
       'SIM_ERROR_PROPAGATION',
       'SIM_FREE_FALL',
+      'SIM_INCLINED_PLANE',
       'SIM_SCREW_GAUGE',
       'SIM_VERNIER_CALIPER',
+      'VIZ_DISTANCE_DISPLACEMENT',
       'VIZ_LOG_SCALE_EXPLORER',
+      'VIZ_MOTION_GRAPHER',
     ])
   })
 })
