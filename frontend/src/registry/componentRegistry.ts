@@ -3,6 +3,7 @@ import ScrewGauge from '../components/instruments/ScrewGauge'
 import ErrorPropagationLab from '../components/measurement/ErrorPropagationLab'
 import LogScaleExplorer from '../components/viz/LogScaleExplorer'
 import QuizRunner from '../components/assessment/QuizRunner'
+import FreeFall from '../components/kinematics/FreeFall'
 import type { Renderer } from './types'
 
 /**
@@ -23,6 +24,7 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_ERROR_PROPAGATION: ErrorPropagationLab as unknown as Renderer,
   VIZ_LOG_SCALE_EXPLORER: LogScaleExplorer as unknown as Renderer,
   QUIZ_RUNNER: QuizRunner as unknown as Renderer,
+  SIM_FREE_FALL: FreeFall as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {

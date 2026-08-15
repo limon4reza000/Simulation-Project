@@ -172,5 +172,31 @@ export const chapter01Lessons: LessonSpec[] = [
       },
     ],
   },
+  {
+    id: 7,
+    titleBn: 'পড়ন্ত বস্তুর সূত্র (দ্বিতীয় অধ্যায়ের নমুনা)',
+    titleEn: 'Laws of Falling Bodies (Chapter 2 preview)',
+    components: [
+      {
+        id: 701,
+        componentType: 'EXPLANATION',
+        displayOrder: 1,
+        sourcePage: 48,
+        bodyBn:
+          'বিনা বাধায় পড়ন্ত বস্তুর ক্ষেত্রে গ্যালিলিও তিনটি সূত্র দিয়েছিলেন: একই উচ্চতা থেকে সব বস্তু একই সময়ে পড়ে, বেগ সময়ের সমানুপাতিক (v ∝ t), এবং অতিক্রান্ত দূরত্ব সময়ের বর্গের সমানুপাতিক (h ∝ t²)।',
+        bodyEn:
+          "Galileo's three laws of free fall: all bodies released from the same height fall in the same time; velocity is proportional to time (v ∝ t); and distance fallen is proportional to time squared (h ∝ t²).",
+      },
+      {
+        id: 702,
+        componentType: 'SIMULATION',
+        displayOrder: 2,
+        rendererType: 'SIM_FREE_FALL',
+        sourcePage: 49,
+        config: { maxHeightM: 40 },
+        parameters: { heightM: 20, compareMass: false },
+      },
+    ],
+  },
   chapter01QuizLesson,
 ]

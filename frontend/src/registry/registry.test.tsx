@@ -33,10 +33,11 @@ describe('component registry', () => {
     expect(resolveRenderer(undefined)).toBeUndefined()
   })
 
-  it('exposes the Chapter 1 artefacts', () => {
+  it('exposes the registered artefacts', () => {
     expect(Object.keys(componentRegistry).sort()).toEqual([
       'QUIZ_RUNNER',
       'SIM_ERROR_PROPAGATION',
+      'SIM_FREE_FALL',
       'SIM_SCREW_GAUGE',
       'SIM_VERNIER_CALIPER',
       'VIZ_LOG_SCALE_EXPLORER',

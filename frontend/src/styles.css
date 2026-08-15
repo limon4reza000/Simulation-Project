@@ -810,3 +810,8 @@ body {
   color: var(--ink-muted);
   font-size: 0.85rem;
 }
+
+.sim__curve {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
