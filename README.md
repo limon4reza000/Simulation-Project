@@ -2,18 +2,18 @@
 
 An interactive learning platform for Bangladeshi secondary students, built on
 NCTB curriculum content. First vertical slice: **Physics, Class 9–10**,
-Chapters 1–3 (partial) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল.
+Chapters 1–3 (complete) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল.
 
 ## Status
 
-300 tests passing (137 backend, 163 frontend), plus live-database and
+349 tests passing (137 backend, 212 frontend), plus live-database and
 browser-driven verification for every renderer.
 
 | Area | State |
 |---|---|
 | Database schema | Migrated and verified against MySQL 8.4.9; all CHECK constraints proven to enforce |
 | Seed | Chapters 1–3, each idempotent and independently re-runnable |
-| Renderers | 10 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision — each with pure-logic tests checked against the book's own equations or printed figures |
+| Renderers | 13 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance — each with pure-logic tests checked against the book's own equations or printed figures |
 | Component registry | The architectural core: adding an artefact is one component + one registry line |
 | API layer | Catalog, lesson, activity, quiz, progress, auth, registration, teacher-roster and admin-assignment endpoints |
 | Auth | Separate student/teacher login and registration; session cookies, scrypt passwords, role enforced server-side |
@@ -36,23 +36,29 @@ backend/
     seed.ts                    Physics 9–10 Chapter 1
   scripts/
     seedChapter2.ts            additive, per-lesson idempotent — see its header
+    seedChapter3.ts            same pattern, for Chapter 3
 frontend/
   src/
     lib/instruments/           Chapter 1 instrument logic — no React, fully tested
     lib/measurement/           error propagation
     lib/kinematics/            Chapter 2 kinematics logic — free fall, inclined
                                 plane, path geometry, motion grapher
+    lib/dynamics/               Chapter 3 dynamics logic — collision, Newton's
+                                second law, friction incline, force balance
     components/instruments/    VernierCaliper, ScrewGauge (SVG)
     components/measurement/    ErrorPropagationLab
     components/viz/            LogScaleExplorer
     components/kinematics/     FreeFall, InclinedPlane, DistanceDisplacement,
                                 MotionGrapher
+    components/dynamics/       Collision, NewtonsSecondLaw, FrictionIncline,
+                                ForceBalance
     registry/                  the component registry — the load-bearing abstraction
     data/chapter01.ts          fixtures standing in for the API
 docs/
   architecture/schema-decisions.md   every deviation from the report, justified
   content/physics-9-10-chapter-01.md content plan traced to book pages
   content/physics-9-10-chapter-02.md same, for Chapter 2
+  content/physics-9-10-chapter-03.md same, for Chapter 3
   content/textbook-issues.md         printing defects found in the source book
 ```
 
@@ -64,7 +70,7 @@ docs/
 cd frontend
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 163 tests
+npm test         # 212 tests
 npm run build
 ```
 
@@ -338,3 +344,10 @@ a deployed environment.
 7. Chapter 2's নমুনা প্রশ্ন MCQs are not yet digitised into `Question` rows
 8. Confirm the section number for গতি ও লেখচিত্র (pp. 51–53) — read but not
    pinned down against the printed page
+9. Chapter 3 Tier 2 (optional): Atwood machine (p. 81), a four-force
+   comparison card for §৩.২, and a Newton's-cradle momentum demo
+10. Chapter 3's spring-scale calibration activity (pp. 82–83) is read but not
+    pinned to a numbered section heading — confirm before seeding
+11. Chapter 3's নমুনা প্রশ্ন MCQs (p. 94+) are not yet digitised into
+    `Question` rows
+12. Chapter 4 has not yet been identified or read from the source PDF
