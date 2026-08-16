@@ -35,6 +35,10 @@ import SnellsLaw from '../components/optics/SnellsLaw'
 import CriticalAngle from '../components/optics/CriticalAngle'
 import LensImage from '../components/optics/LensImage'
 import LensPower from '../components/optics/LensPower'
+import CoulombsLaw from '../components/electricity/CoulombsLaw'
+import ElectricField from '../components/electricity/ElectricField'
+import CapacitorEnergy from '../components/electricity/CapacitorEnergy'
+import ElectronTransfer from '../components/electricity/ElectronTransfer'
 import type { Renderer } from './types'
 
 /**
@@ -87,6 +91,10 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_CRITICAL_ANGLE: CriticalAngle as unknown as Renderer,
   SIM_LENS_IMAGE: LensImage as unknown as Renderer,
   SIM_LENS_POWER: LensPower as unknown as Renderer,
+  SIM_COULOMBS_LAW: CoulombsLaw as unknown as Renderer,
+  SIM_ELECTRIC_FIELD: ElectricField as unknown as Renderer,
+  SIM_CAPACITOR_ENERGY: CapacitorEnergy as unknown as Renderer,
+  SIM_ELECTRON_TRANSFER: ElectronTransfer as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {
