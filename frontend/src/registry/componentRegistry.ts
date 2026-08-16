@@ -31,6 +31,10 @@ import LawOfReflection from '../components/optics/LawOfReflection'
 import PlaneMirrorImage from '../components/optics/PlaneMirrorImage'
 import SphericalMirror from '../components/optics/SphericalMirror'
 import MirrorFormula from '../components/optics/MirrorFormula'
+import SnellsLaw from '../components/optics/SnellsLaw'
+import CriticalAngle from '../components/optics/CriticalAngle'
+import LensImage from '../components/optics/LensImage'
+import LensPower from '../components/optics/LensPower'
 import type { Renderer } from './types'
 
 /**
@@ -79,6 +83,10 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_PLANE_MIRROR_IMAGE: PlaneMirrorImage as unknown as Renderer,
   SIM_SPHERICAL_MIRROR: SphericalMirror as unknown as Renderer,
   SIM_MIRROR_FORMULA: MirrorFormula as unknown as Renderer,
+  SIM_SNELLS_LAW: SnellsLaw as unknown as Renderer,
+  SIM_CRITICAL_ANGLE: CriticalAngle as unknown as Renderer,
+  SIM_LENS_IMAGE: LensImage as unknown as Renderer,
+  SIM_LENS_POWER: LensPower as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {

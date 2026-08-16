@@ -2,19 +2,20 @@
 
 An interactive learning platform for Bangladeshi secondary students, built on
 NCTB curriculum content. First vertical slice: **Physics, Class 9–10**,
-Chapters 1–8 (complete) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি,
-পদার্থের অবস্থা ও চাপ, বস্তুর ওপর তাপের প্রভাব, তরঙ্গ ও শব্দ, আলোর প্রতিফলন.
+Chapters 1–9 (complete) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি,
+পদার্থের অবস্থা ও চাপ, বস্তুর ওপর তাপের প্রভাব, তরঙ্গ ও শব্দ, আলোর প্রতিফলন,
+আলোর প্রতিসরণ.
 
 ## Status
 
-550 tests passing (137 backend, 413 frontend), plus live-database and
+593 tests passing (137 backend, 456 frontend), plus live-database and
 browser-driven verification for every renderer.
 
 | Area | State |
 |---|---|
 | Database schema | Migrated and verified against MySQL 8.4.9; all CHECK constraints proven to enforce |
-| Seed | Chapters 1–8, each idempotent and independently re-runnable |
-| Renderers | 33 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency, pressure, liquid pressure, Archimedes/buoyancy, Hooke's law, temperature scales, thermal expansion, heating curve, calorimetry, pendulum period, wave properties, sound speed, echo, law of reflection, plane mirror image, spherical mirror, mirror formula — each with pure-logic tests checked against the book's own equations or printed figures |
+| Seed | Chapters 1–9, each idempotent and independently re-runnable |
+| Renderers | 37 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency, pressure, liquid pressure, Archimedes/buoyancy, Hooke's law, temperature scales, thermal expansion, heating curve, calorimetry, pendulum period, wave properties, sound speed, echo, law of reflection, plane mirror image, spherical mirror, mirror formula, Snell's law, critical angle, lens image, lens power — each with pure-logic tests checked against the book's own equations or printed figures |
 | Component registry | The architectural core: adding an artefact is one component + one registry line |
 | API layer | Catalog, lesson, activity, quiz, progress, auth, registration, teacher-roster and admin-assignment endpoints |
 | Auth | Separate student/teacher login and registration; session cookies, scrypt passwords, role enforced server-side |
@@ -43,6 +44,7 @@ backend/
     seedChapter6.ts            same pattern, for Chapter 6
     seedChapter7.ts            same pattern, for Chapter 7
     seedChapter8.ts            same pattern, for Chapter 8
+    seedChapter9.ts            same pattern, for Chapter 9
 frontend/
   src/
     lib/instruments/           Chapter 1 instrument logic — no React, fully tested
@@ -59,8 +61,9 @@ frontend/
                                 thermal expansion, heating curve, calorimetry
     lib/waves/                   Chapter 7 wave/sound logic — pendulum period,
                                 wave properties, sound speed, echo
-    lib/optics/                  Chapter 8 optics logic — law of reflection,
-                                plane mirror, spherical mirror, mirror formula
+    lib/optics/                  Chapter 8-9 optics logic — law of reflection,
+                                plane mirror, spherical mirror, mirror formula,
+                                Snell's law, critical angle, lens image, lens power
     components/instruments/    VernierCaliper, ScrewGauge (SVG)
     components/measurement/    ErrorPropagationLab
     components/viz/            LogScaleExplorer
@@ -75,7 +78,8 @@ frontend/
                                 CalorimetryLab
     components/waves/          PendulumPeriod, WaveProperties, SoundSpeed, Echo
     components/optics/         LawOfReflection, PlaneMirrorImage, SphericalMirror,
-                                MirrorFormula
+                                MirrorFormula, SnellsLaw, CriticalAngle, LensImage,
+                                LensPower
     registry/                  the component registry — the load-bearing abstraction
     data/chapter01.ts          fixtures standing in for the API
 docs/
@@ -88,6 +92,7 @@ docs/
   content/physics-9-10-chapter-06.md same, for Chapter 6
   content/physics-9-10-chapter-07.md same, for Chapter 7
   content/physics-9-10-chapter-08.md same, for Chapter 8
+  content/physics-9-10-chapter-09.md same, for Chapter 9
   content/textbook-issues.md         printing defects found in the source book
 ```
 
@@ -99,7 +104,7 @@ docs/
 cd frontend
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 413 tests
+npm test         # 456 tests
 npm run build
 ```
 
@@ -404,5 +409,10 @@ a deployed environment.
     multiple-mirror-image construction (p. 219–221, চিত্র ৮.০৪)
 21. Chapter 8's নমুনা প্রশ্ন MCQs (p. 237+) are not yet digitised into
     `Question` rows
-22. Chapter 9 (আলোর প্রতিসরণ — Refraction of Light) has not yet been
+22. Chapter 9 Tier 2 (optional): a rainbow/mirage TIR-in-nature demo
+    (§৯.২.১–৯.২.২), a prism-dispersion visual (§৯.৩.২, চিত্র ৯.১২), and a
+    periscope/binoculars construction (§৯.৩.৩, চিত্র ৯.১৩)
+23. Chapter 9's নমুনা প্রশ্ন MCQs (p. 266+) are not yet digitised into
+    `Question` rows
+24. Chapter 10 (স্থির বিদ্যুৎ — Static Electricity) has not yet been
     identified or read from the source PDF
