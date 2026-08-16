@@ -27,6 +27,10 @@ import PendulumPeriod from '../components/waves/PendulumPeriod'
 import WaveProperties from '../components/waves/WaveProperties'
 import SoundSpeed from '../components/waves/SoundSpeed'
 import Echo from '../components/waves/Echo'
+import LawOfReflection from '../components/optics/LawOfReflection'
+import PlaneMirrorImage from '../components/optics/PlaneMirrorImage'
+import SphericalMirror from '../components/optics/SphericalMirror'
+import MirrorFormula from '../components/optics/MirrorFormula'
 import type { Renderer } from './types'
 
 /**
@@ -71,6 +75,10 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_WAVE_PROPERTIES: WaveProperties as unknown as Renderer,
   SIM_SOUND_SPEED: SoundSpeed as unknown as Renderer,
   SIM_ECHO: Echo as unknown as Renderer,
+  SIM_LAW_OF_REFLECTION: LawOfReflection as unknown as Renderer,
+  SIM_PLANE_MIRROR_IMAGE: PlaneMirrorImage as unknown as Renderer,
+  SIM_SPHERICAL_MIRROR: SphericalMirror as unknown as Renderer,
+  SIM_MIRROR_FORMULA: MirrorFormula as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {
