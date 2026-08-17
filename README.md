@@ -2,20 +2,31 @@
 
 An interactive learning platform for Bangladeshi secondary students, built on
 NCTB curriculum content. First vertical slice: **Physics, Class 9–10**,
-Chapters 1–10 (complete) — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি,
-পদার্থের অবস্থা ও চাপ, বস্তুর ওপর তাপের প্রভাব, তরঙ্গ ও শব্দ, আলোর প্রতিফলন,
-আলোর প্রতিসরণ, স্থির বিদ্যুৎ.
+Chapters 1–10 complete, Chapter 11 code-complete pending seed/verification —
+ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি, পদার্থের অবস্থা ও চাপ,
+বস্তুর ওপর তাপের প্রভাব, তরঙ্গ ও শব্দ, আলোর প্রতিফলন, আলোর প্রতিসরণ, স্থির বিদ্যুৎ,
+চল বিদ্যুৎ.
 
 ## Status
 
-629 tests passing (137 backend, 492 frontend), plus live-database and
-browser-driven verification for every renderer.
+670 tests passing (137 backend, 533 frontend), plus live-database and
+browser-driven verification for every renderer through Chapter 10.
+
+**Chapter 11 caveat:** built and unit-tested (`SIM_OHMS_LAW`,
+`SIM_WIRE_RESISTANCE`, `SIM_SERIES_PARALLEL_CIRCUIT`, `SIM_ELECTRIC_POWER`),
+registered, and `scripts/seedChapter11.ts` is written — but not yet run or
+browser-verified. The isolated dev MySQL instance (port 3307) was found
+stopped mid-session with no registered Windows service; starting it was
+deferred by explicit user decision rather than started unilaterally, since
+its data directory also holds the user's real `school_management_system`
+database. Run the seed script and browser-verify once MySQL is available —
+see docs/content/physics-9-10-chapter-11.md.
 
 | Area | State |
 |---|---|
 | Database schema | Migrated and verified against MySQL 8.4.9; all CHECK constraints proven to enforce |
-| Seed | Chapters 1–10, each idempotent and independently re-runnable |
-| Renderers | 41 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency, pressure, liquid pressure, Archimedes/buoyancy, Hooke's law, temperature scales, thermal expansion, heating curve, calorimetry, pendulum period, wave properties, sound speed, echo, law of reflection, plane mirror image, spherical mirror, mirror formula, Snell's law, critical angle, lens image, lens power, Coulomb's law, electric field, capacitor energy, electron transfer — each with pure-logic tests checked against the book's own equations or printed figures |
+| Seed | Chapters 1–10, each idempotent and independently re-runnable. Chapter 11's seed script exists but has not yet been run (see caveat above) |
+| Renderers | 45 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency, pressure, liquid pressure, Archimedes/buoyancy, Hooke's law, temperature scales, thermal expansion, heating curve, calorimetry, pendulum period, wave properties, sound speed, echo, law of reflection, plane mirror image, spherical mirror, mirror formula, Snell's law, critical angle, lens image, lens power, Coulomb's law, electric field, capacitor energy, electron transfer, Ohm's law, wire resistance, series/parallel circuits, electric power/bill — each with pure-logic tests checked against the book's own equations or printed figures |
 | Component registry | The architectural core: adding an artefact is one component + one registry line |
 | API layer | Catalog, lesson, activity, quiz, progress, auth, registration, teacher-roster and admin-assignment endpoints |
 | Auth | Separate student/teacher login and registration; session cookies, scrypt passwords, role enforced server-side |
@@ -46,6 +57,7 @@ backend/
     seedChapter8.ts            same pattern, for Chapter 8
     seedChapter9.ts            same pattern, for Chapter 9
     seedChapter10.ts           same pattern, for Chapter 10
+    seedChapter11.ts           same pattern, for Chapter 11 (not yet run — see caveat)
 frontend/
   src/
     lib/instruments/           Chapter 1 instrument logic — no React, fully tested
@@ -68,6 +80,9 @@ frontend/
     lib/electricity/              Chapter 10 static-electricity logic — Coulomb's
                                 law, electric field/potential, capacitor,
                                 electron transfer
+    lib/circuits/                 Chapter 11 current-electricity logic — Ohm's
+                                law, wire resistance, series/parallel circuits,
+                                electric power/bill
     components/instruments/    VernierCaliper, ScrewGauge (SVG)
     components/measurement/    ErrorPropagationLab
     components/viz/            LogScaleExplorer
@@ -86,6 +101,8 @@ frontend/
                                 LensPower
     components/electricity/    CoulombsLaw, ElectricField, CapacitorEnergy,
                                 ElectronTransfer
+    components/circuits/       OhmsLaw, WireResistance, SeriesParallelCircuit,
+                                ElectricPowerBill
     registry/                  the component registry — the load-bearing abstraction
     data/chapter01.ts          fixtures standing in for the API
 docs/
@@ -100,6 +117,7 @@ docs/
   content/physics-9-10-chapter-08.md same, for Chapter 8
   content/physics-9-10-chapter-09.md same, for Chapter 9
   content/physics-9-10-chapter-10.md same, for Chapter 10
+  content/physics-9-10-chapter-11.md same, for Chapter 11 (seed/verify pending)
   content/textbook-issues.md         printing defects found in the source book
 ```
 
@@ -111,7 +129,7 @@ docs/
 cd frontend
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 492 tests
+npm test         # 533 tests
 npm run build
 ```
 
@@ -426,5 +444,15 @@ a deployed environment.
     lightning-rod/earthing safety demonstration (§১০.৮.৫)
 25. Chapter 10's নমুনা প্রশ্ন MCQs (p. 293+) are not yet digitised into
     `Question` rows
-26. Chapter 11 (চল বিদ্যুৎ — Current Electricity) has not yet been
-    identified or read from the source PDF
+26. **Chapter 11 seeding and browser-verification are pending** — MySQL was
+    down when this chapter's simulations were built; run
+    `npx tsx scripts/seedChapter11.ts` once the dev database is available,
+    confirm idempotency by running it twice, then browser-verify following
+    the pattern in every earlier chapter's commit history
+27. Chapter 11 Tier 2 (optional): a circuit-symbols reference gallery
+    (§১১.২.৩, চিত্র ১১.০৭), a high-voltage transmission-loss demo (§১১.৪.১),
+    and an electrical-safety demonstration (pp. 320–321)
+28. Chapter 11's নমুনা প্রশ্ন MCQs (p. 322+) are not yet digitised into
+    `Question` rows
+29. Chapter 12 (বিদ্যুতের চৌম্বক ক্রিয়া — Magnetic Effects of Current) has not
+    yet been identified or read from the source PDF

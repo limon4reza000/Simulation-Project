@@ -39,6 +39,10 @@ import CoulombsLaw from '../components/electricity/CoulombsLaw'
 import ElectricField from '../components/electricity/ElectricField'
 import CapacitorEnergy from '../components/electricity/CapacitorEnergy'
 import ElectronTransfer from '../components/electricity/ElectronTransfer'
+import OhmsLaw from '../components/circuits/OhmsLaw'
+import WireResistance from '../components/circuits/WireResistance'
+import SeriesParallelCircuit from '../components/circuits/SeriesParallelCircuit'
+import ElectricPowerBill from '../components/circuits/ElectricPowerBill'
 import type { Renderer } from './types'
 
 /**
@@ -95,6 +99,10 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_ELECTRIC_FIELD: ElectricField as unknown as Renderer,
   SIM_CAPACITOR_ENERGY: CapacitorEnergy as unknown as Renderer,
   SIM_ELECTRON_TRANSFER: ElectronTransfer as unknown as Renderer,
+  SIM_OHMS_LAW: OhmsLaw as unknown as Renderer,
+  SIM_WIRE_RESISTANCE: WireResistance as unknown as Renderer,
+  SIM_SERIES_PARALLEL_CIRCUIT: SeriesParallelCircuit as unknown as Renderer,
+  SIM_ELECTRIC_POWER: ElectricPowerBill as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {
