@@ -47,6 +47,10 @@ import Transformer from '../components/magnetism/Transformer'
 import MagneticFieldDirection from '../components/magnetism/MagneticFieldDirection'
 import ElectromagnetStrength from '../components/magnetism/ElectromagnetStrength'
 import DCMotor from '../components/magnetism/DCMotor'
+import HalfLife from '../components/nuclear/HalfLife'
+import RadiationShielding from '../components/nuclear/RadiationShielding'
+import SemiconductorDoping from '../components/electronics/SemiconductorDoping'
+import BinaryConverter from '../components/electronics/BinaryConverter'
 import type { Renderer } from './types'
 
 /**
@@ -111,6 +115,10 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_MAGNETIC_FIELD_DIRECTION: MagneticFieldDirection as unknown as Renderer,
   SIM_ELECTROMAGNET_STRENGTH: ElectromagnetStrength as unknown as Renderer,
   SIM_DC_MOTOR: DCMotor as unknown as Renderer,
+  SIM_HALF_LIFE: HalfLife as unknown as Renderer,
+  SIM_RADIATION_SHIELDING: RadiationShielding as unknown as Renderer,
+  SIM_SEMICONDUCTOR_DOPING: SemiconductorDoping as unknown as Renderer,
+  SIM_BINARY_CONVERTER: BinaryConverter as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {

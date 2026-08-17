@@ -1,36 +1,39 @@
 # Interactive Learning and Simulation Platform
 
 An interactive learning platform for Bangladeshi secondary students, built on
-NCTB curriculum content. First vertical slice: **Physics, Class 9–10**,
-Chapters 1–10 complete, Chapters 11–12 code-complete pending seed/verification
-— ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি, পদার্থের অবস্থা ও চাপ,
-বস্তুর ওপর তাপের প্রভাব, তরঙ্গ ও শব্দ, আলোর প্রতিফলন, আলোর প্রতিসরণ, স্থির বিদ্যুৎ,
-চল বিদ্যুৎ, বিদ্যুতের চৌম্বক ক্রিয়া.
+NCTB curriculum content. First vertical slice: **Physics, Class 9–10, all 13
+chapters** — Chapters 1–10 complete, Chapters 11–13 code-complete pending
+seed/verification — ভৌত রাশি এবং তাদের পরিমাপ, গতি, বল, কাজ ক্ষমতা ও শক্তি,
+পদার্থের অবস্থা ও চাপ, বস্তুর ওপর তাপের প্রভাব, তরঙ্গ ও শব্দ, আলোর প্রতিফলন,
+আলোর প্রতিসরণ, স্থির বিদ্যুৎ, চল বিদ্যুৎ, বিদ্যুতের চৌম্বক ক্রিয়া, তেজস্ক্রিয়তা ও
+ইলেকট্রনিকস. Chapter 13 is the textbook's own final chapter — Tier-1
+simulation code now exists for the entire book.
 
 ## Status
 
-704 tests passing (137 backend, 567 frontend), plus live-database and
+741 tests passing (137 backend, 602 frontend), plus live-database and
 browser-driven verification for every renderer through Chapter 10.
 
-**Chapters 11–12 caveat:** both built and unit-tested — Chapter 11:
+**Chapters 11–13 caveat:** all three built and unit-tested — Chapter 11:
 `SIM_OHMS_LAW`, `SIM_WIRE_RESISTANCE`, `SIM_SERIES_PARALLEL_CIRCUIT`,
 `SIM_ELECTRIC_POWER`; Chapter 12: `SIM_TRANSFORMER`,
-`SIM_MAGNETIC_FIELD_DIRECTION`, `SIM_ELECTROMAGNET_STRENGTH`, `SIM_DC_MOTOR`
-— registered, and `scripts/seedChapter11.ts` / `scripts/seedChapter12.ts` are
-both written, but neither has been run or browser-verified. The isolated dev
-MySQL instance (port 3307) was found stopped mid-session with no registered
-Windows service; starting it was deferred by explicit user decision rather
-than started unilaterally, since its data directory also holds the user's
-real `school_management_system` database. Run both seed scripts and
-browser-verify once MySQL is available — see
-docs/content/physics-9-10-chapter-11.md and
-docs/content/physics-9-10-chapter-12.md.
+`SIM_MAGNETIC_FIELD_DIRECTION`, `SIM_ELECTROMAGNET_STRENGTH`, `SIM_DC_MOTOR`;
+Chapter 13: `SIM_HALF_LIFE`, `SIM_RADIATION_SHIELDING`,
+`SIM_SEMICONDUCTOR_DOPING`, `SIM_BINARY_CONVERTER` — registered, and
+`scripts/seedChapter11.ts` / `12.ts` / `13.ts` are all written, but none has
+been run or browser-verified. The isolated dev MySQL instance (port 3307)
+was found stopped mid-session with no registered Windows service; starting
+it was deferred by explicit user decision rather than started unilaterally,
+since its data directory also holds the user's real `school_management_system`
+database. Run all three seed scripts and browser-verify once MySQL is
+available — see docs/content/physics-9-10-chapter-11.md,
+`-chapter-12.md` and `-chapter-13.md`.
 
 | Area | State |
 |---|---|
 | Database schema | Migrated and verified against MySQL 8.4.9; all CHECK constraints proven to enforce |
-| Seed | Chapters 1–10, each idempotent and independently re-runnable. Chapters 11–12's seed scripts exist but have not yet been run (see caveat above) |
-| Renderers | 49 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency, pressure, liquid pressure, Archimedes/buoyancy, Hooke's law, temperature scales, thermal expansion, heating curve, calorimetry, pendulum period, wave properties, sound speed, echo, law of reflection, plane mirror image, spherical mirror, mirror formula, Snell's law, critical angle, lens image, lens power, Coulomb's law, electric field, capacitor energy, electron transfer, Ohm's law, wire resistance, series/parallel circuits, electric power/bill, transformer, magnetic field direction, electromagnet strength, DC motor — each with pure-logic tests checked against the book's own equations or printed figures |
+| Seed | Chapters 1–10, each idempotent and independently re-runnable. Chapters 11–13's seed scripts exist but have not yet been run (see caveat above) |
+| Renderers | 53 built: caliper, screw gauge, error propagation, log-scale explorer, quiz runner, free fall, inclined plane, distance/displacement, motion grapher, collision, Newton's second law, friction incline, force balance, work, energy conversion, pendulum energy, power/efficiency, pressure, liquid pressure, Archimedes/buoyancy, Hooke's law, temperature scales, thermal expansion, heating curve, calorimetry, pendulum period, wave properties, sound speed, echo, law of reflection, plane mirror image, spherical mirror, mirror formula, Snell's law, critical angle, lens image, lens power, Coulomb's law, electric field, capacitor energy, electron transfer, Ohm's law, wire resistance, series/parallel circuits, electric power/bill, transformer, magnetic field direction, electromagnet strength, DC motor, half-life, radiation shielding, semiconductor doping, binary converter — each with pure-logic tests checked against the book's own equations or printed figures |
 | Component registry | The architectural core: adding an artefact is one component + one registry line |
 | API layer | Catalog, lesson, activity, quiz, progress, auth, registration, teacher-roster and admin-assignment endpoints |
 | Auth | Separate student/teacher login and registration; session cookies, scrypt passwords, role enforced server-side |
@@ -63,6 +66,7 @@ backend/
     seedChapter10.ts           same pattern, for Chapter 10
     seedChapter11.ts           same pattern, for Chapter 11 (not yet run — see caveat)
     seedChapter12.ts           same pattern, for Chapter 12 (not yet run — see caveat)
+    seedChapter13.ts           same pattern, for Chapter 13, the final chapter (not yet run — see caveat)
 frontend/
   src/
     lib/instruments/           Chapter 1 instrument logic — no React, fully tested
@@ -91,6 +95,10 @@ frontend/
     lib/magnetism/                 Chapter 12 magnetism logic — transformer,
                                 magnetic field direction, electromagnet
                                 strength, DC motor
+    lib/nuclear/                    Chapter 13 nuclear logic — half-life,
+                                radiation shielding
+    lib/electronics/                Chapter 13 electronics logic — semiconductor
+                                doping, binary converter
     components/instruments/    VernierCaliper, ScrewGauge (SVG)
     components/measurement/    ErrorPropagationLab
     components/viz/            LogScaleExplorer
@@ -113,6 +121,8 @@ frontend/
                                 ElectricPowerBill
     components/magnetism/      Transformer, MagneticFieldDirection,
                                 ElectromagnetStrength, DCMotor
+    components/nuclear/        HalfLife, RadiationShielding
+    components/electronics/    SemiconductorDoping, BinaryConverter
     registry/                  the component registry — the load-bearing abstraction
     data/chapter01.ts          fixtures standing in for the API
 docs/
@@ -129,6 +139,8 @@ docs/
   content/physics-9-10-chapter-10.md same, for Chapter 10
   content/physics-9-10-chapter-11.md same, for Chapter 11 (seed/verify pending)
   content/physics-9-10-chapter-12.md same, for Chapter 12 (seed/verify pending)
+  content/physics-9-10-chapter-13.md same, for Chapter 13, the final chapter
+                                (seed/verify pending)
   content/textbook-issues.md         printing defects found in the source book
 ```
 
@@ -140,7 +152,7 @@ docs/
 cd frontend
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 567 tests
+npm test         # 602 tests
 npm run build
 ```
 
@@ -474,5 +486,20 @@ a deployed environment.
     and an AC/DC current waveform gallery
 31. Chapter 12's নমুনা প্রশ্ন MCQs (p. 343+) are not yet digitised into
     `Question` rows
-32. Chapter 13 (তেজস্ক্রিয়তা ও ইলেকট্রনিকস — Radioactivity and Electronics) has
-    not yet been identified or read from the source PDF
+32. **Chapter 13 seeding and browser-verification are pending** for the same
+    reason as Chapters 11-12 — run `npx tsx scripts/seedChapter13.ts` once
+    the dev database is available, confirm idempotency by running it twice,
+    then browser-verify Chapters 11, 12 and 13 together in the same session.
+    **This closes out full Tier-1 simulation coverage of the entire
+    textbook** — Chapter 13 is the book's own final chapter.
+33. Chapter 13 Tier 2 (optional): a vacuum-tube/transistor/IC electronics
+    history timeline (§১৩.২.১–১৩.২.৩), a side-by-side analog-vs-digital
+    waveform visual (§১৩.৩, চিত্র ১৩.০৪), and a carbon-dating walkthrough
+    built on `SIM_HALF_LIFE` (§১৩.১.৫)
+34. Chapter 13's নমুনা প্রশ্ন MCQs (p. 359+) are not yet digitised into
+    `Question` rows
+35. With all 13 chapters' Tier-1 artefacts now built (pending the seed/verify
+    backlog above), remaining work is: clearing that backlog once MySQL is
+    back up; digitising every chapter's নমুনা প্রশ্ন MCQs into `Question` rows
+    (items 7, 17, 23, 25, 28, 31, 34 above); and any Tier-2 artefacts worth
+    adding per chapter (items 6, 9, 12, 14, 20, 24, 27, 30, 33 above)
