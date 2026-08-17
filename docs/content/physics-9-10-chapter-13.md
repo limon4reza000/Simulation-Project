@@ -50,9 +50,9 @@ Beta decay:          n -> p + e- + antineutrino (Z+1, A same)      (p. 350-351)
 
 ## Visualization and simulation plan
 
-### Tier 1 — built, seeding/browser-verification deferred
+### Tier 1 — done
 
-All four built with pure-logic tests passing (35 tests) and a clean `tsc -b` production build. `scripts/seedChapter13.ts` is written and ready to run, following the same additive per-lesson-idempotent pattern as every earlier chapter, but — same as Chapters 11 and 12 — has **not yet been run or browser-verified**, since the isolated dev MySQL instance (port 3307) is still down as of this chapter, the last in the book. Run `npx tsx scripts/seedChapter11.ts`, `scripts/seedChapter12.ts` and `scripts/seedChapter13.ts` once MySQL is available, then browser-verify all three following the same temporarily-repointed-`useLessonSource`-chapter-index procedure used for every prior chapter — this closes out full Tier-1 coverage of the entire textbook.
+All four built, registered, seeded (`scripts/seedChapter13.ts`), and verified live (see the reinitialized-MySQL note in Chapter 11's plan — the same fresh instance and full reseed covered this chapter too). Signed in as the seeded student and walked all four lessons in a real browser: confirmed no negative-SVG-width regressions, confirmed `SIM_HALF_LIFE`'s default (T=100, t=200) gives exactly 25% remaining after 2 half-lives, confirmed `SIM_RADIATION_SHIELDING`'s default (beta vs. paper) correctly shows the radiation passing through and recommends aluminium instead, confirmed `SIM_SEMICONDUCTOR_DOPING`'s default (5 valence electrons) correctly classifies n-type with a free-electron carrier, confirmed `SIM_BINARY_CONVERTER`'s default (42) gives exactly `101010`. **This closes out full Tier-1 simulation coverage, seeding, and browser verification of the entire textbook — all 13 chapters.**
 
 #### 1. `SIM_HALF_LIFE` — অর্ধায়ু, §১৩.১.৪
 

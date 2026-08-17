@@ -62,6 +62,8 @@ export default function DCMotor({
 
   const frameRef = useRef<number | undefined>(undefined)
   const lastRef = useRef(0)
+  const angleRef = useRef(angle)
+  angleRef.current = angle
 
   useEffect(() => {
     if (!spinning) return
@@ -69,18 +71,24 @@ export default function DCMotor({
     const tick = (now: number) => {
       const dt = (now - lastRef.current) / 1000
       lastRef.current = now
-      setAngle((prev) => {
-        const next = advanceAngle(prev, degreesPerSecond * dt)
-        if (next < prev) {
-          setPassedDeadPoint(true)
-          onActivity?.({
-            activityType: 'DC_MOTOR_PASSED_DEAD_POINT',
-            metadata: { angleDeg: prev },
-            occurredAt: new Date().toISOString(),
-          })
-        }
-        return next
-      })
+      // Read/advance via a ref rather than setAngle's own updater: the
+      // updater runs during React's render phase, and calling another
+      // component's setState from inside one (what onActivity does, up in
+      // StudentDashboard) triggers "Cannot update a component while
+      // rendering a different component" — the same bug fixed in
+      // MagneticFieldDirection.tsx.
+      const prev = angleRef.current
+      const next = advanceAngle(prev, degreesPerSecond * dt)
+      angleRef.current = next
+      setAngle(next)
+      if (next < prev) {
+        setPassedDeadPoint(true)
+        onActivity?.({
+          activityType: 'DC_MOTOR_PASSED_DEAD_POINT',
+          metadata: { angleDeg: prev },
+          occurredAt: new Date().toISOString(),
+        })
+      }
       frameRef.current = requestAnimationFrame(tick)
     }
     frameRef.current = requestAnimationFrame(tick)

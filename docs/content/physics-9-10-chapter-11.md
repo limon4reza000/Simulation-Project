@@ -55,9 +55,9 @@ Energy (kWh, "unit"):     energy = (P × t)/1000, P in W, t in hours     (p. 319
 
 ## Visualization and simulation plan
 
-### Tier 1 — built, seeding/browser-verification deferred
+### Tier 1 — done
 
-All four built with pure-logic tests passing (41 tests) and a clean `tsc -b` production build. `scripts/seedChapter11.ts` is written and ready to run, following the same additive per-lesson-idempotent pattern as every earlier chapter, but has **not yet been run or browser-verified**: the isolated dev MySQL instance (port 3307) was found stopped mid-session with no registered Windows service, and starting it was deferred by explicit user decision rather than started unilaterally, since its data directory also holds the user's real `school_management_system` database. Run `npx tsx scripts/seedChapter11.ts` once MySQL is available, then browser-verify following the same temporarily-repointed-`useLessonSource`-chapter-index procedure used for every prior chapter, before marking this section fully done.
+All four built, registered, seeded (`scripts/seedChapter11.ts`), and verified live. The isolated dev MySQL instance (port 3307) had gone down mid-project with its original data directory unrecoverable; a fresh instance was reinitialized at `C:\mysql-ilsp-dev\data` and every migration, CHECK constraint, and seed script (Chapters 1–13) was re-run from scratch, confirmed idempotent by re-running each script a second time. Signed in as the seeded student and walked all four lessons in a real browser: confirmed no negative-SVG-width regressions, confirmed `SIM_OHMS_LAW`'s default (6 V, 3 Ω) gives exactly 2 A, confirmed `SIM_WIRE_RESISTANCE`'s default (copper, 1.84 m) gives ≈0.98 Ω, confirmed `SIM_SERIES_PARALLEL_CIRCUIT`'s default series case (5+10 Ω at 6 V) gives exactly 15 Ω / 0.4 A, confirmed `SIM_ELECTRIC_POWER`'s default reproduces the book's own 9 units / ৳90 exactly.
 
 #### 1. `SIM_OHMS_LAW` — ও'মের সূত্র, চিত্র ১১.০৪
 

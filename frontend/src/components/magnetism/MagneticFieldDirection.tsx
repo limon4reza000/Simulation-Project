@@ -49,19 +49,22 @@ export default function MagneticFieldDirection({
   const field = useMemo(() => fieldAroundStraightWire(current), [current])
 
   const toggle = useCallback(() => {
-    setCurrent((prev) => {
-      const next = reverseCurrent(prev)
-      if (!reported) {
-        setReported(true)
-        onActivity?.({
-          activityType: 'MAGNETIC_FIELD_DIRECTION_EXPLORED',
-          metadata: { currentDirection: next },
-          occurredAt: new Date().toISOString(),
-        })
-      }
-      return next
-    })
-  }, [reported, onActivity])
+    // Compute the next value and report it as a plain side effect, rather
+    // than inside the setCurrent updater: updater functions run during
+    // React's render phase, and calling another component's setState (what
+    // onActivity does, up in StudentDashboard) from inside one triggers
+    // "Cannot update a component while rendering a different component."
+    const next = reverseCurrent(current)
+    setCurrent(next)
+    if (!reported) {
+      setReported(true)
+      onActivity?.({
+        activityType: 'MAGNETIC_FIELD_DIRECTION_EXPLORED',
+        metadata: { currentDirection: next },
+        occurredAt: new Date().toISOString(),
+      })
+    }
+  }, [current, reported, onActivity])
 
   const arrowY1 = current === 'up' ? 220 : 40
   const arrowY2 = current === 'up' ? 40 : 220

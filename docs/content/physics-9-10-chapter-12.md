@@ -45,9 +45,9 @@ Transformer current:     VpIp = VsIs   =>  Is = (Vp/Vs)Ip = (np/ns)Ip           
 
 ## Visualization and simulation plan
 
-### Tier 1 — built, seeding/browser-verification deferred
+### Tier 1 — done
 
-All four built with pure-logic tests passing (34 tests) and a clean `tsc -b` production build. `scripts/seedChapter12.ts` is written and ready to run, following the same additive per-lesson-idempotent pattern as every earlier chapter, but — same as Chapter 11 — has **not yet been run or browser-verified**, since the isolated dev MySQL instance (port 3307) is still down as of this chapter. Run `npx tsx scripts/seedChapter11.ts` and `scripts/seedChapter12.ts` once MySQL is available, then browser-verify both chapters following the same temporarily-repointed-`useLessonSource`-chapter-index procedure used for every prior chapter.
+All four built, registered, seeded (`scripts/seedChapter12.ts`), and verified live (see the reinitialized-MySQL note in Chapter 11's plan — the same fresh instance and full reseed covered this chapter too). Signed in as the seeded student and walked all four lessons in a real browser: confirmed no negative-SVG-width regressions, confirmed `SIM_MAGNETIC_FIELD_DIRECTION` correctly flips between counter-clockwise and clockwise on reversing the current, confirmed `SIM_ELECTROMAGNET_STRENGTH`'s default (1 A, 50 turns) gives exactly 50, confirmed `SIM_DC_MOTOR` spins continuously through its dead points without stopping, confirmed `SIM_TRANSFORMER`'s default (12 V AC, 100→1000 turns) reproduces the book's own 120 V / 0.1 A step-up exactly. One real bug was found and fixed along the way — see the commit for detail.
 
 #### 1. `SIM_TRANSFORMER` — ট্রান্সফর্মার, চিত্র ১২.১৩–১২.১৫
 
