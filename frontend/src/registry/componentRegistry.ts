@@ -43,6 +43,10 @@ import OhmsLaw from '../components/circuits/OhmsLaw'
 import WireResistance from '../components/circuits/WireResistance'
 import SeriesParallelCircuit from '../components/circuits/SeriesParallelCircuit'
 import ElectricPowerBill from '../components/circuits/ElectricPowerBill'
+import Transformer from '../components/magnetism/Transformer'
+import MagneticFieldDirection from '../components/magnetism/MagneticFieldDirection'
+import ElectromagnetStrength from '../components/magnetism/ElectromagnetStrength'
+import DCMotor from '../components/magnetism/DCMotor'
 import type { Renderer } from './types'
 
 /**
@@ -103,6 +107,10 @@ export const componentRegistry: Record<string, Renderer> = {
   SIM_WIRE_RESISTANCE: WireResistance as unknown as Renderer,
   SIM_SERIES_PARALLEL_CIRCUIT: SeriesParallelCircuit as unknown as Renderer,
   SIM_ELECTRIC_POWER: ElectricPowerBill as unknown as Renderer,
+  SIM_TRANSFORMER: Transformer as unknown as Renderer,
+  SIM_MAGNETIC_FIELD_DIRECTION: MagneticFieldDirection as unknown as Renderer,
+  SIM_ELECTROMAGNET_STRENGTH: ElectromagnetStrength as unknown as Renderer,
+  SIM_DC_MOTOR: DCMotor as unknown as Renderer,
 }
 
 export function resolveRenderer(type: string | undefined): Renderer | undefined {
